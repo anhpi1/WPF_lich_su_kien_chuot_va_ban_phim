@@ -16,11 +16,11 @@ using System.Windows.Shapes;
 namespace WPF_lich_su_kien_chuot_va_ban_phim.View
 {
     /// <summary>
-    /// Interaction logic for haianh_uc_menu.xaml
+    /// Interaction logic for dat_uc_menu.xaml
     /// </summary>
-    public partial class haianh_uc_menu : UserControl
+    public partial class dat_uc_menu : UserControl
     {
-        public haianh_uc_menu()
+        public dat_uc_menu()
         {
             InitializeComponent();
         }
