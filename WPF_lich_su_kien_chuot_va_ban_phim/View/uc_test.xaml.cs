@@ -20,14 +20,15 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
     /// </summary>
     public partial class uc_test : UserControl
     {
+        public string NameValue { get; set; }
         public uc_test()
         {
             InitializeComponent();
         }
-
-        private void uc_click_test(object sender, RoutedEventArgs e)
+       
+        private void my_func_click_show_text_from_user_control_of_win(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Hello World");
+            MessageBox.Show("this is user control messeger: " + NameValue);
         }
     }
 }

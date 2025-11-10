@@ -6,19 +6,31 @@
         xmlns:local="clr-namespace:WPF_lich_su_kien_chuot_va_ban_phim"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
-    <Grid Background="Olive">
-        <Button x:Name="btn_test" 
-                Content="Test Button" 
-                Width="100" 
-                Height="30" 
-                Click="btn_test_Click"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Top"
-                Margin="10"
+    <StackPanel Background="Olive">
+        <Button 
+                Content="show user control test"                 
+                Click="my_btn_show_user_control"               
                 />
-                
+        <Button 
+                Content="set data to NameValue from win"                 
+                Click="my_func_set_data_to_NameValue_of_user_control_from_win"               
+                />
+        <Button 
+                Content="show text of user control from win"                 
+                Click="my_func_click_show_text_of_user_control_from_win"               
+                />
+        <TextBox 
+                    x:Name="my_tb_1" 
+                    Text="Hello, World!" 
+                    VerticalAlignment="Center" 
+                    FontSize="16"
+                    Background="Aqua"
+                    />
+        
+            
+       
         <ContentControl x:Name="myctrl"></ContentControl>
 
 
-    </Grid>
+    </StackPanel>
 </Window>

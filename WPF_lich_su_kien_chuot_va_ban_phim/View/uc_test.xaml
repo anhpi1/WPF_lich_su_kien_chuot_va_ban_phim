@@ -6,11 +6,16 @@
              xmlns:local="clr-namespace:WPF_lich_su_kien_chuot_va_ban_phim.View"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    <Grid>
-        <Button Content="Test Button" 
-                Width="100" 
-                Height="30" 
-                Click="uc_click_test"
-                />
-    </Grid>
+
+    <StackPanel>
+        <Button Content="show text from user control of win" 
+              
+                    Click="my_func_click_show_text_from_user_control_of_win"
+                    />
+        <TextBox x:Name="my_tb_1" 
+                       Text="Hello from uc_test!" 
+                       FontSize="16"
+                       Background="red"/>
+    </StackPanel>
+
 </UserControl>
