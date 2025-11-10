@@ -11,7 +11,6 @@
                 Width="100" 
                 Height="30" 
                 Click="uc_click_test"
-                
                 />
     </Grid>
 </UserControl>
