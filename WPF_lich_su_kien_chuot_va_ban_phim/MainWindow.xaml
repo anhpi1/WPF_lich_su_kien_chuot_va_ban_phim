@@ -1,0 +1,24 @@
+﻿<Window x:Class="WPF_lich_su_kien_chuot_va_ban_phim.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WPF_lich_su_kien_chuot_va_ban_phim"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800">
+    <Grid Background="Olive">
+        <Button x:Name="btn_test" 
+                Content="Test Button" 
+                Width="100" 
+                Height="30" 
+                Click="btn_test_Click"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                Margin="10"
+                />
+                
+        <ContentControl x:Name="myctrl"></ContentControl>
+
+
+    </Grid>
+</Window>
