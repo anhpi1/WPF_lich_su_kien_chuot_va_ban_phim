@@ -9,8 +9,29 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="img\Home.png" />
+    <None Remove="img\Setting.png" />
+    <None Remove="server\main.exe" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="server\main.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Control\" />
-    <Folder Include="Model\" />
+    <Folder Include="log\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="img\Home.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="img\Setting.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
   </ItemGroup>
 
 </Project>

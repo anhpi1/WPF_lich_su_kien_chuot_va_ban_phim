@@ -6,7 +6,9 @@
              xmlns:local="clr-namespace:WPF_lich_su_kien_chuot_va_ban_phim.View"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    <Grid>
+    <Grid Background="Aqua"
+          Height="1000"
+          Width="2000">
             
     </Grid>
 </UserControl>

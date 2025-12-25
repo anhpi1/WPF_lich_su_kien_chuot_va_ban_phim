@@ -1,51 +1,153 @@
-﻿using System.Text;
+﻿using System.Diagnostics;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
+using System.IO;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using WPF_lich_su_kien_chuot_va_ban_phim.View;
+using WPF_lich_su_kien_chuot_va_ban_phim.Model;
 
 namespace WPF_lich_su_kien_chuot_va_ban_phim
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
-        string data;
-        uc_test my_user_control;
+        // Độ phân giải gốc bạn thiết kế
+        private HOOK__UC_main HOOK_UC_Main;
+        private const double DESIGN_WIDTH = 1920.0;
+        private const double DESIGN_HEIGHT = 1080.0;
+        private bool is_home_on = true;
+        private bool is_setting_on = false;
+        
 
         public MainWindow()
         {
             InitializeComponent();
+            
+            
+         
+            // Gắn sự kiện resize
+            SizeChanged += MainWindow_SizeChanged;
+            Loaded += MainWindow_Loaded;
+            HOOK_UC_Main = new HOOK__UC_main();
+            myctrl.Content = HOOK_UC_Main;
+
         }
 
-        private void btn_test_Click(object sender, RoutedEventArgs e)
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("1");
+            ApplyScale();
+        }
 
+        private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            ApplyScale();
+        }
+
+        private void ApplyScale()
+        {
+            if (RootGrid == null) return;
+
+            double scaleX = ActualWidth / DESIGN_WIDTH;
+            double scaleY = ActualHeight / DESIGN_HEIGHT;
+
+            RootGrid.LayoutTransform = new ScaleTransform(scaleX, scaleY);
+        }
+        private void AnimateFromBottom(UIElement elem)
+        {
+            // 1️⃣ TranslateTransform (trôi từ dưới lên)
+            var tt = elem.RenderTransform as TranslateTransform;
+            if (tt == null)
+            {
+                tt = new TranslateTransform();
+                elem.RenderTransform = tt;
+            }
+
+            var moveAnim = new DoubleAnimation
+            {
+                From = 50, // bắt đầu 50px dưới
+                To = 0,    // về vị trí chuẩn
+                Duration = TimeSpan.FromSeconds(0.6),
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+            };
+            tt.BeginAnimation(TranslateTransform.YProperty, moveAnim);
+
+            // 2️⃣ Fade-in
+            elem.Opacity = 0; // reset opacity trước khi animate
+            var fadeAnim = new DoubleAnimation
+            {
+                From = 0,   // mờ hoàn toàn
+                To = 1,     // xuất hiện đầy đủ
+                Duration = TimeSpan.FromSeconds(0.6),
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+            };
+            elem.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
         }
 
 
-        private void my_btn_show_user_control(object sender, RoutedEventArgs e)
+        private void Button_Click(object sender, RoutedEventArgs e)
         {
-            my_user_control = new uc_test();
-            myctrl.Content = my_user_control;
+            Home_on.Visibility = Visibility.Visible;
+            Home_off.Visibility = Visibility.Hidden;
+            Home.Foreground = (Brush)new BrushConverter().ConvertFrom("#3b82f6");
+            Screen.Source = new BitmapImage(new Uri("img/Home.png", UriKind.Relative));
+            Screen_text_header.Text = "Home";
+            Screen_text_title.Text = "Welcome to my app!";
+            is_home_on = true;
+
+            Setting_on.Visibility = Visibility.Hidden;
+            Setting_off.Visibility = Visibility.Visible;
+            Setting.Foreground = (Brush)new BrushConverter().ConvertFrom("#FF979DA5");
+            is_setting_on = false;
+
+            // Animate trôi từ dưới lên
+            AnimateFromBottom(Screen);
+            AnimateFromBottom(Screen_text_header);
+            AnimateFromBottom(Screen_text_title);
         }
 
-        private void my_func_click_show_text_of_user_control_from_win(object sender, RoutedEventArgs e)
+        private void Button_Click_1(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("this is win messeger: "+my_user_control.my_tb_1.Text);
+            Setting_on.Visibility = Visibility.Visible;
+            Setting_off.Visibility = Visibility.Hidden;
+            Setting.Foreground = (Brush)new BrushConverter().ConvertFrom("#3b82f6");
+            Screen.Source = new BitmapImage(new Uri("img/Setting.png", UriKind.Relative));
+            Screen_text_header.Text = "Setting";
+            Screen_text_title.Text = "Đây là nơi khó hiểu!";
+            is_setting_on = true;
+
+            Home_on.Visibility = Visibility.Hidden;
+            Home_off.Visibility = Visibility.Visible;
+            Home.Foreground = (Brush)new BrushConverter().ConvertFrom("#FF979DA5");
+            is_home_on = false;
+
+            // Animate trôi từ dưới lên
+            AnimateFromBottom(Screen);
+            AnimateFromBottom(Screen_text_header);
+            AnimateFromBottom(Screen_text_title);
         }
 
-        private void my_func_set_data_to_NameValue_of_user_control_from_win(object sender, RoutedEventArgs e)
+
+        private void home_mouse_leave(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            my_user_control.NameValue = my_tb_1.Text;
+            if (is_home_on) Home.Foreground = (Brush)new BrushConverter().ConvertFrom("#3b82f6");
+            else Home.Foreground = (Brush)new BrushConverter().ConvertFrom("#FF979DA5");
+            
+        }
+
+        private void home_mouse_enter(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            Home.Foreground = (Brush)new BrushConverter().ConvertFrom("#000000");
+        }
+
+        private void Setting_mouse_enter(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            Setting.Foreground = (Brush)new BrushConverter().ConvertFrom("#000000");
+        }
+
+        private void Setting_mouse_leaver(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            if (is_setting_on) Setting.Foreground = (Brush)new BrushConverter().ConvertFrom("#3b82f6");
+            else Setting.Foreground = (Brush)new BrushConverter().ConvertFrom("#FF979DA5");
         }
 
     }
