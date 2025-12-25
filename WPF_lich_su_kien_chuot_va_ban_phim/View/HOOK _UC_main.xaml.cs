@@ -126,6 +126,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
                 Record_off.Visibility = Visibility.Hidden;
                 Record.Foreground = (Brush)new BrushConverter().ConvertFrom("#3b82f6");
             }
+            LoadFilePairs(@"server\log");
         }
 
         private async void Button_Click_1(object sender, RoutedEventArgs e)
