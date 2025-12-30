@@ -1,4 +1,5 @@
 ﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics; // Dùng cho Process
 using System.IO;          // Dùng cho Path, File
@@ -6,16 +7,15 @@ using System.IO.Pipes;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows;
-using System;
 using System.Threading.Tasks; // Dùng nếu muốn kết nối bất đồng bộ (Optional)
+using System.Windows;
 
 namespace WPF_lich_su_kien_chuot_va_ban_phim.Model
 {
     internal class control_server_class
     {
         public NamedPipeClientStream _pipeClient;
-
+        
         public void RunServer()
         {
             try
@@ -39,10 +39,10 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.Model
                 startInfo.UseShellExecute = false;
 
                 // 2. Thuộc tính quan trọng nhất để không hiện cửa sổ đen
-                startInfo.CreateNoWindow = true;
+                //startInfo.CreateNoWindow = true;
 
                 // 3. Đặt trạng thái cửa sổ là ẩn (dự phòng)
-                startInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                //startInfo.WindowStyle = ProcessWindowStyle.Hidden;
                 // -----------------------------
 
                 Process.Start(startInfo);
@@ -76,6 +76,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.Model
                 MessageBox.Show("Đã kết nối thành công đến Server!");
 
                 // Lúc này kết nối đã mở, nhưng chưa gửi lệnh gì cả theo yêu cầu của bạn.
+                
             }
             catch (TimeoutException)
             {
@@ -87,7 +88,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.Model
             }
         }
         // Hàm gửi một chuỗi lệnh bất kỳ sang Server
-        public void SendCommand(string command)
+        public  void SendCommand(string command)
         {
             try
             {
@@ -99,19 +100,13 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.Model
                 }
                 MessageBox.Show($"Command send: {command}");
 
-                // 2. Sử dụng StreamWriter để ghi chuỗi
-                // leaveOpen: true để giữ kết nối pipe không bị đóng sau khi writer đóng (tùy chọn, nhưng an toàn hơn)
                 StreamWriter writer = new StreamWriter(_pipeClient);
-
-                // QUAN TRỌNG: AutoFlush = true đảm bảo lệnh được gửi đi NGAY LẬP TỨC
-                // Nếu không có dòng này, lệnh có thể bị kẹt trong bộ đệm (buffer) và Server không nhận được gì.
                 writer.AutoFlush = true;
-
-                // 3. Gửi lệnh
                 writer.Write(command);
 
-                // Debug: Xác nhận đã gửi (có thể bỏ đi khi chạy thật)
-                // Console.WriteLine("Đã gửi lệnh: " + command);
+        
+
+
             }
             catch (Exception ex)
             {

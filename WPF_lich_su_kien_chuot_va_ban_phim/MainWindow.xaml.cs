@@ -150,5 +150,9 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim
             else Setting.Foreground = (Brush)new BrushConverter().ConvertFrom("#FF979DA5");
         }
 
+        private void Button_Click_2(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }

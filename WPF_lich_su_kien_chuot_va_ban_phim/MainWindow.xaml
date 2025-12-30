@@ -214,6 +214,7 @@
                         </StackPanel>
                         <Button Style="{StaticResource InvisibleButton}" Background="Transparent" Height="60" Width="300" Margin="20,10,0,0" BorderBrush="Transparent" Click="Button_Click" MouseEnter="home_mouse_enter" MouseLeave="home_mouse_leave"></Button>
                     </Grid>
+                    
                     <Grid Grid.Row="1">
                         <Grid  x:Name="Setting_on" Visibility="Hidden">
                             <Path Fill="#ECF0F3" HorizontalAlignment="Center">
@@ -309,7 +310,7 @@
                         <Button Style="{StaticResource InvisibleButton}" Background="Transparent" Height="60" Width="300" Margin="20,10,0,0" BorderBrush="Transparent" Click="Button_Click_1" MouseEnter="Setting_mouse_enter" MouseLeave="Setting_mouse_leaver"></Button>
                     </Grid>
 
-
+                   
 
 
 

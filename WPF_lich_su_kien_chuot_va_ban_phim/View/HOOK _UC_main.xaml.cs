@@ -52,7 +52,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
             for (int i = 0; i < count; i++)
             {
                 // Ghép 2 file thành 1 string, xuống dòng giữa 2 tên
-                string pair = $" log\\{System.IO.Path.GetFileName(mouseFiles[i])} log\\{System.IO.Path.GetFileName(keyboardFiles[i])}";
+                string pair = $"log\\{System.IO.Path.GetFileName(mouseFiles[i])} log\\{System.IO.Path.GetFileName(keyboardFiles[i])}";
                 filePairs.Add(pair);
             }
 
@@ -136,7 +136,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
             Replay_off.Visibility = Visibility.Hidden;
             Replay.Foreground = (Brush)new BrushConverter().ConvertFrom("#3b82f6");
 
-            controlServer.SendCommand($"REPLAY {Selected_file_replay}");
+            controlServer.SendCommand($"REPLAY {Selected_file_replay} 2");
             await Task.Delay(200);
 
             Replay_on.Visibility = Visibility.Hidden;
