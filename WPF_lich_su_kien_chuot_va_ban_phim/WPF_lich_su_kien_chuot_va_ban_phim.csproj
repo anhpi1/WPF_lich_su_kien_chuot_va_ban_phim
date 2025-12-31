@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="img\Filter.png" />
     <None Remove="img\Home.png" />
     <None Remove="img\Setting.png" />
     <None Remove="server\main.exe" />
@@ -26,6 +27,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="img\Filter.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="img\Home.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>

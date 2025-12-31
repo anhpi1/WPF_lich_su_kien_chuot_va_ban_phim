@@ -13,11 +13,13 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim
     {
         // Độ phân giải gốc bạn thiết kế
         private HOOK__UC_main HOOK_UC_Main;
+        private HOOK_UC_filter HOOK_UC_Filter;
         private const double DESIGN_WIDTH = 1920.0;
         private const double DESIGN_HEIGHT = 1080.0;
         private bool is_home_on = true;
         private bool is_setting_on = false;
-        
+        private bool is_filter_on = false;
+
 
         public MainWindow()
         {
@@ -29,6 +31,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim
             SizeChanged += MainWindow_SizeChanged;
             Loaded += MainWindow_Loaded;
             HOOK_UC_Main = new HOOK__UC_main();
+            HOOK_UC_Filter = new HOOK_UC_filter();
             myctrl.Content = HOOK_UC_Main;
 
         }
@@ -93,11 +96,17 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim
             Screen_text_header.Text = "Home";
             Screen_text_title.Text = "Welcome to my app!";
             is_home_on = true;
+            myctrl.Content = HOOK_UC_Main;
 
             Setting_on.Visibility = Visibility.Hidden;
             Setting_off.Visibility = Visibility.Visible;
             Setting.Foreground = (Brush)new BrushConverter().ConvertFrom("#FF979DA5");
             is_setting_on = false;
+
+            Filter_on.Visibility = Visibility.Hidden;
+            Filter_off.Visibility = Visibility.Visible;
+            Filter.Foreground = (Brush)new BrushConverter().ConvertFrom("#FF979DA5");
+            is_filter_on = false;
 
             // Animate trôi từ dưới lên
             AnimateFromBottom(Screen);
@@ -112,13 +121,18 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim
             Setting.Foreground = (Brush)new BrushConverter().ConvertFrom("#3b82f6");
             Screen.Source = new BitmapImage(new Uri("img/Setting.png", UriKind.Relative));
             Screen_text_header.Text = "Setting";
-            Screen_text_title.Text = "Đây là nơi khó hiểu!";
+            Screen_text_title.Text = "Bạn có thể kiểm soát mọi thứ!";
             is_setting_on = true;
 
             Home_on.Visibility = Visibility.Hidden;
             Home_off.Visibility = Visibility.Visible;
             Home.Foreground = (Brush)new BrushConverter().ConvertFrom("#FF979DA5");
             is_home_on = false;
+
+            Filter_on.Visibility = Visibility.Hidden;
+            Filter_off.Visibility = Visibility.Visible;
+            Filter.Foreground = (Brush)new BrushConverter().ConvertFrom("#FF979DA5");
+            is_filter_on = false;
 
             // Animate trôi từ dưới lên
             AnimateFromBottom(Screen);
@@ -152,7 +166,40 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim
 
         private void Button_Click_2(object sender, RoutedEventArgs e)
         {
+            Filter_on.Visibility = Visibility.Visible;
+            Filter_off.Visibility = Visibility.Hidden;
+            Filter.Foreground = (Brush)new BrushConverter().ConvertFrom("#3b82f6");
+            Screen.Source = new BitmapImage(new Uri("img/Filter.png", UriKind.Relative));
+            Screen_text_header.Text = "Filter";
+            Screen_text_title.Text = "Lọc những thứ khó hiểu thành dễ hiểu!";
+            is_filter_on = true;
+            myctrl.Content = HOOK_UC_Filter;
 
+            Home_on.Visibility = Visibility.Hidden;
+            Home_off.Visibility = Visibility.Visible;
+            Home.Foreground = (Brush)new BrushConverter().ConvertFrom("#FF979DA5");
+            is_home_on = false;
+
+            Setting_on.Visibility = Visibility.Hidden;
+            Setting_off.Visibility = Visibility.Visible;
+            Setting.Foreground = (Brush)new BrushConverter().ConvertFrom("#FF979DA5");
+            is_setting_on = false;
+
+            // Animate trôi từ dưới lên
+            AnimateFromBottom(Screen);
+            AnimateFromBottom(Screen_text_header);
+            AnimateFromBottom(Screen_text_title);
+        }
+
+        private void Filter_mouse_enter(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            Filter.Foreground = (Brush)new BrushConverter().ConvertFrom("#000000");
+        }
+
+        private void Filter_mouse_leaver(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            if (is_filter_on) Filter.Foreground = (Brush)new BrushConverter().ConvertFrom("#3b82f6");
+            else Filter.Foreground = (Brush)new BrushConverter().ConvertFrom("#FF979DA5");
         }
     }
 }

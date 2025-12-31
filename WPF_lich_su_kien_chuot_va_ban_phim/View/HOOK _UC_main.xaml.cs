@@ -28,7 +28,10 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
     {
         private control_server_class controlServer;
         private string Selected_file_replay = " log\\mouse_log0.csv log\\keyboard_log0.csv";
-        
+        private double ScaleFactor => SystemParameters.PrimaryScreenHeight / 1080.0;
+        private bool togger_record = false;
+        private bool togger_replay = false;
+
         public HOOK__UC_main()
         {
             InitializeComponent();
@@ -103,10 +106,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
             }
         }
 
-        private double ScaleFactor => SystemParameters.PrimaryScreenHeight / 1080.0;
-
-        private bool togger_record = false;
-        private bool togger_replay = false;
+       
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
