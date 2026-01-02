@@ -5,26 +5,205 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:WPF_lich_su_kien_chuot_va_ban_phim.View"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
-    <Grid>
+             d:DesignHeight="600" d:DesignWidth="900">
+
+    <UserControl.Resources>
+        <Style TargetType="ScrollBar">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Width" Value="8"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Background="#F1F5F9">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition/>
-            <ColumnDefinition/>
+            <ColumnDefinition Width="280"/>
+            <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
-        <Grid.RowDefinitions>
-            <RowDefinition />
-            <RowDefinition />
-        </Grid.RowDefinitions>
-        
-        <Grid Grid.Row="1" Grid.Column="1">
-            <Grid Background="Yellow">
+
+        <Border Grid.Column="0" Background="White" BorderBrush="#E2E8F0" BorderThickness="0,0,1,0" Padding="20">
+            <StackPanel>
+                <TextBlock Text="Cấu Hình Lọc" FontSize="18" FontWeight="Bold" Foreground="#1E293B" Margin="0,0,0,20"/>
+
+                <TextBlock Text="Tìm kiếm file" FontSize="14" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,5"/>
+                <Border CornerRadius="8" BorderBrush="#CBD5E1" BorderThickness="1" Padding="10" Background="#F8FAFC" Margin="0,0,0,20">
+                    <Grid>
+                        <TextBlock Text="Nhập tên sự kiện..." Foreground="#94A3B8" FontStyle="Italic" VerticalAlignment="Center" IsHitTestVisible="False"/>
+                        <TextBox Background="Transparent" BorderThickness="0" FontSize="14" Foreground="#334155"/>
+                    </Grid>
+                </Border>
+
+                <TextBlock Text="Loại thiết bị" FontSize="14" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,10"/>
                 <StackPanel>
-                    <TextBlock Foreground="Transparent" FontSize="30"></TextBlock>
-                    <TextBlock x:Name="Setting" Foreground="#FF979DA5" FontSize="30" Margin="20,0,0,0" HorizontalAlignment="Center">Setting</TextBlock>
+                    <CheckBox Content="Mouse (Chuột)" IsChecked="True" Margin="0,5" Foreground="#334155" FontSize="14"/>
+                    <CheckBox Content="Keyboard (Phím)" IsChecked="True" Margin="0,5" Foreground="#334155" FontSize="14"/>
                 </StackPanel>
-                <Button Style="{StaticResource InvisibleButton}" Background="Transparent" Height="60" Width="300" Margin="20,10,0,0" BorderBrush="Transparent"></Button>
-            </Grid>
+
+                <Separator Margin="0,20" Background="#E2E8F0"/>
+
+                <TextBlock Text="Hành động" FontSize="14" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,10"/>
+                <CheckBox Content="Click / Release" Margin="0,5" Foreground="#334155"/>
+                <CheckBox Content="Move (Di chuyển)" Margin="0,5" Foreground="#334155"/>
+                <CheckBox Content="Key Press" Margin="0,5" Foreground="#334155"/>
+
+                <Button Content="Áp dụng lọc" Margin="0,30,0,0" Height="40" Background="#3B82F6" Foreground="White" FontWeight="Bold" BorderThickness="0">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="8"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
+            </StackPanel>
+        </Border>
+
+        <Grid Grid.Column="1" Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,15">
+                <TextBlock Text="Danh Sách File Sự Kiện" FontSize="22" FontWeight="Bold" Foreground="#1E293B" VerticalAlignment="Center"/>
+                <Border Background="#DBEAFE" CornerRadius="10" Padding="10,2" Margin="10,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="processed_events" Foreground="#2563EB" FontSize="12" FontWeight="SemiBold"/>
+                </Border>
+            </StackPanel>
+
+            <ListBox Grid.Row="1" 
+                     Background="Transparent" 
+                     BorderThickness="0" 
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     HorizontalContentAlignment="Stretch">
+
+                <ListBox.Items>
+
+                    <ListBoxItem>
+                        <Border Background="White" CornerRadius="10" Padding="15,10" Margin="0,0,0,10" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Border Grid.Column="0" Width="40" Height="40" Background="#EEF2FF" CornerRadius="8" Margin="0,0,15,0">
+                                    <TextBlock Text="🖱️" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="1_[Di_chuyen_con_tro_chuot]" FontWeight="Bold" Foreground="#334155" FontSize="15"/>
+                                    <TextBlock Text="File CSV • 12KB • Vừa xong" Foreground="#94A3B8" FontSize="12" Margin="0,2,0,0"/>
+                                </StackPanel>
+
+                                <Button Grid.Column="2" Width="40" Height="40" Background="Transparent" BorderThickness="0">
+                                    <Grid>
+                                        <Ellipse Fill="#F1F5F9" Width="36" Height="36"/>
+                                        <Polygon Points="14,10 24,18 14,26" Fill="#3B82F6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="2,0,0,0"/>
+                                    </Grid>
+                                </Button>
+                            </Grid>
+                        </Border>
+                    </ListBoxItem>
+
+                    <ListBoxItem>
+                        <Border Background="White" CornerRadius="10" Padding="15,10" Margin="0,0,0,10" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Width="40" Height="40" Background="#FFF1F2" CornerRadius="8" Margin="0,0,15,0">
+                                    <TextBlock Text="⚡" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="2_[Nhan_chuot_trai_(Click)]" FontWeight="Bold" Foreground="#334155" FontSize="15"/>
+                                    <TextBlock Text="File CSV • 2KB • 1 phút trước" Foreground="#94A3B8" FontSize="12" Margin="0,2,0,0"/>
+                                </StackPanel>
+                                <Button Grid.Column="2" Width="40" Height="40" Background="Transparent" BorderThickness="0">
+                                    <Grid>
+                                        <Ellipse Fill="#F1F5F9" Width="36" Height="36"/>
+                                        <Polygon Points="14,10 24,18 14,26" Fill="#3B82F6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="2,0,0,0"/>
+                                    </Grid>
+                                </Button>
+                            </Grid>
+                        </Border>
+                    </ListBoxItem>
+
+                    <ListBoxItem>
+                        <Border Background="White" CornerRadius="10" Padding="15,10" Margin="0,0,0,10" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Width="40" Height="40" Background="#F0FDF4" CornerRadius="8" Margin="0,0,15,0">
+                                    <TextBlock Text="⌨️" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="4_[A]" FontWeight="Bold" Foreground="#334155" FontSize="15"/>
+                                    <TextBlock Text="File CSV • 1KB • 2 phút trước" Foreground="#94A3B8" FontSize="12" Margin="0,2,0,0"/>
+                                </StackPanel>
+                                <Button Grid.Column="2" Width="40" Height="40" Background="Transparent" BorderThickness="0">
+                                    <Grid>
+                                        <Ellipse Fill="#F1F5F9" Width="36" Height="36"/>
+                                        <Polygon Points="14,10 24,18 14,26" Fill="#3B82F6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="2,0,0,0"/>
+                                    </Grid>
+                                </Button>
+                            </Grid>
+                        </Border>
+                    </ListBoxItem>
+
+                    <ListBoxItem>
+                        <Border Background="White" CornerRadius="10" Padding="15,10" Margin="0,0,0,10" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Width="40" Height="40" Background="#F0FDF4" CornerRadius="8" Margin="0,0,15,0">
+                                    <TextBlock Text="⌨️" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="5_[B]" FontWeight="Bold" Foreground="#334155" FontSize="15"/>
+                                    <TextBlock Text="File CSV • 1KB • 2 phút trước" Foreground="#94A3B8" FontSize="12" Margin="0,2,0,0"/>
+                                </StackPanel>
+                                <Button Grid.Column="2" Width="40" Height="40" Background="Transparent" BorderThickness="0">
+                                    <Grid>
+                                        <Ellipse Fill="#F1F5F9" Width="36" Height="36"/>
+                                        <Polygon Points="14,10 24,18 14,26" Fill="#3B82F6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="2,0,0,0"/>
+                                    </Grid>
+                                </Button>
+                            </Grid>
+                        </Border>
+                    </ListBoxItem>
+
+                </ListBox.Items>
+            </ListBox>
+
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+                <Button Content="Xóa file chọn" Background="Transparent" Foreground="#EF4444" BorderBrush="#FECACA" BorderThickness="1" Width="120" Height="45" Margin="0,0,15,0">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="8"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
+
+                <Button Content="Phát lại (Replay)" Background="#3B82F6" Foreground="White" FontWeight="Bold" BorderThickness="0" Width="180" Height="45">
+                    <Button.Effect>
+                        <DropShadowEffect Color="#3B82F6" BlurRadius="20" ShadowDepth="5" Opacity="0.3" Direction="270"/>
+                    </Button.Effect>
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="8"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
+            </StackPanel>
+
         </Grid>
-        
     </Grid>
 </UserControl>
