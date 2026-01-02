@@ -171,7 +171,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim
             Filter.Foreground = (Brush)new BrushConverter().ConvertFrom("#3b82f6");
             Screen.Source = new BitmapImage(new Uri("img/Filter.png", UriKind.Relative));
             Screen_text_header.Text = "Filter";
-            Screen_text_title.Text = "Lọc những thứ khó hiểu thành dễ hiểu!";
+            Screen_text_title.Text = "Lọc những thứ khó hiểu thành dễ hiểu";
             is_filter_on = true;
             myctrl.Content = HOOK_UC_Filter;
 
