@@ -45,6 +45,10 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
 
         private void LoadFilePairs(string folderPath)
         {
+            if (!Directory.Exists(folderPath))
+            {
+                Directory.CreateDirectory(folderPath);
+            }
             // Lấy tất cả file mouse_log*.csv và keyboard_log*.csv
             var mouseFiles = Directory.GetFiles(folderPath, "mouse_log*.csv").OrderBy(f => f).ToList();
             var keyboardFiles = Directory.GetFiles(folderPath, "keyboard_log*.csv").OrderBy(f => f).ToList();
@@ -71,6 +75,9 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
                 LoadFilePairs(@"server\log");
             }
         }
+        private void FilePairListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+{
+}
 
 
         private void HOOK__UC_main_Loaded(object sender, RoutedEventArgs e)
@@ -131,12 +138,17 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
 
         private async void Button_Click_1(object sender, RoutedEventArgs e)
         {
-
             Replay_on.Visibility = Visibility.Visible;
             Replay_off.Visibility = Visibility.Hidden;
             Replay.Foreground = (Brush)new BrushConverter().ConvertFrom("#3b82f6");
 
-            controlServer.SendCommand($"REPLAY {Selected_file_replay} 2");
+            string mode;
+            if (Mode0.IsChecked == true) mode = "0";
+            else if (Mode1.IsChecked == true) mode = "1";
+            else mode = "2";
+
+
+            controlServer.SendCommand($"REPLAY {Selected_file_replay} {mode}");
             await Task.Delay(200);
 
             Replay_on.Visibility = Visibility.Hidden;
@@ -150,6 +162,5 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
             
         }
 
-        
     }
 }

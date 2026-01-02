@@ -21,7 +21,7 @@
                         <ColumnDefinition></ColumnDefinition>
                         <ColumnDefinition></ColumnDefinition>
                         <ColumnDefinition></ColumnDefinition>
-                        
+
                     </Grid.ColumnDefinitions>
 
                     <Grid>
@@ -211,7 +211,15 @@
 
                     </Grid>
                 </Grid>
-                <ListBox Background="Transparent" Grid.Row="1" Grid.RowSpan="4" Name="FilePairListBox" Margin="10" MouseLeftButtonUp="FilePairListBox_MouseLeftButtonUp">
+
+                <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
+                    <TextBlock Text="Replay Mode:" VerticalAlignment="Center" Margin="0,0,20,0" FontSize="20" Foreground="#FF979DA5"/>
+                    <RadioButton x:Name="Mode0" Content="Mouse" GroupName="ReplayMode" VerticalAlignment="Center"  Margin="10,0" FontSize="20" Foreground="#FF979DA5"/>
+                    <RadioButton x:Name="Mode1" Content="Keyboard" GroupName="ReplayMode"  VerticalAlignment="Center"  Margin="10,0" FontSize="20" Foreground="#FF979DA5"/>
+                    <RadioButton x:Name="Mode2" Content="Combine" GroupName="ReplayMode" IsChecked="True" VerticalAlignment="Center"  Margin="10,0" FontSize="20" Foreground="#FF979DA5"/>
+                </StackPanel>
+
+                <ListBox Background="Transparent" Grid.Row="1" Grid.RowSpan="4" Name="FilePairListBox" Margin="10" MouseLeftButtonUp="FilePairListBox_MouseLeftButtonUp" SelectionChanged="FilePairListBox_SelectionChanged">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding}" />
