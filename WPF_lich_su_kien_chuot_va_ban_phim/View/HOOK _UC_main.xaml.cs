@@ -18,6 +18,9 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using WPF_lich_su_kien_chuot_va_ban_phim.Model;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Runtime.InteropServices;
+
+
 
 
 namespace WPF_lich_su_kien_chuot_va_ban_phim.View
@@ -36,6 +39,21 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
         private const string LOG_ALIAS = "log\\";
         private const string REAL_LOG_FOLDER = @"server\log\";  // thư mục thật đang chứa file
 
+        [DllImport("user32.dll")]
+        private static extern int ToUnicodeEx(
+    uint wVirtKey,
+    uint wScanCode,
+    byte[] lpKeyState,
+    [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pwszBuff,
+    int cchBuff,
+    uint wFlags,
+    IntPtr dwhkl);
+
+        [DllImport("user32.dll")]
+        private static extern uint MapVirtualKeyEx(uint uCode, uint uMapType, IntPtr dwhkl);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetKeyboardLayout(uint idThread);
         private static string NormalizeSlashes(string p)
         {
             return (p ?? "").Trim().Replace('/', '\\');
@@ -288,17 +306,32 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
                     return looksHex ? Convert.ToUInt32(s, 16) : Convert.ToUInt32(s, 10);
                 }
 
+                uint ParseHex(string s)
+                {
+                    s = (s ?? "").Trim();
+                    if (s.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+                        s = s.Substring(2);
+                    return Convert.ToUInt32(s, 16);
+                }
+
+                int ParseDec(string s)
+                {
+                    return (int)Convert.ToUInt32((s ?? "").Trim(), 10);
+                }
+
                 try
                 {
+                    // Replace 'unit' with 'uint' in the following lines:
                     var ev = new KeyboardReplayEvent
                     {
-                        EventIndex = ParseAuto(parts[0]),
-                        MsgId = ParseAuto(parts[1]),
-                        Time = ParseAuto(parts[2]),
-                        VkCode = ParseAuto(parts[3]),
-                        ScanCode = ParseAuto(parts[4]),
-                        Flags = ParseAuto(parts[5]),
+                        EventIndex = (uint)ParseDec(parts[0]),   // Event(uint) -> decimal
+                        MsgId = ParseHex(parts[1]),              // MsgID(hex)  -> hex (100 => 0x100)
+                        Time = (uint)ParseDec(parts[2]),         // Time(uint)  -> decimal
+                        VkCode = ParseHex(parts[3]),             // VkCode(hex) -> hex
+                        ScanCode = ParseHex(parts[4]),           // ScanCode(hex)-> hex
+                        Flags = ParseHex(parts[5]),              // Flags(hex)  -> hex
                     };
+
                     result.Add(ev);
                 }
                 catch
@@ -326,6 +359,86 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
                 return "Unknown";
             }
         }
+        private bool _shiftDown = false;
+        private bool _capsOn = false;
+        private readonly StringBuilder _typedBuffer = new StringBuilder();
+
+
+        private string? TranslateToText(uint vk, uint scan)
+        {
+            // Các phím điều khiển bạn muốn hiển thị dạng chữ:
+            if (vk == 0x0D) return "\n";      // Enter
+            if (vk == 0x09) return "\t";      // Tab
+            if (vk == 0x20) return " ";       // Space
+            if (vk == 0x08) return null;      // Backspace xử lý riêng
+
+            // Keyboard layout hiện tại
+            IntPtr hkl = GetKeyboardLayout(0);
+
+            // KeyState 256 bytes
+            var keyState = new byte[256];
+
+            // Shift
+            if (_shiftDown)
+            {
+                keyState[0x10] = 0x80; // VK_SHIFT
+                keyState[0xA0] = 0x80; // VK_LSHIFT
+                keyState[0xA1] = 0x80; // VK_RSHIFT
+            }
+
+            // CapsLock: bit 0 = toggle
+            if (_capsOn)
+                keyState[0x14] = 0x01; // VK_CAPITAL
+
+            // Nếu scanCode trong log không chuẩn, bạn có thể map lại:
+            // uint scanCode = scan != 0 ? scan : MapVirtualKeyEx(vk, 0, hkl);
+            uint scanCode = scan;
+
+            var sb = new StringBuilder(8);
+            int rc = ToUnicodeEx(vk, scanCode, keyState, sb, sb.Capacity, 0, hkl);
+
+            // rc > 0: có ký tự
+            if (rc > 0)
+                return sb.ToString();
+
+            return null;
+        }
+
+        private void ApplyKeyEventToTextBuffer(KeyboardReplayEvent ev)
+        {
+            uint vk = ev.VkCode;
+
+            // Cập nhật modifier
+            bool isShiftKey = (vk == 0x10 || vk == 0xA0 || vk == 0xA1);
+            if (isShiftKey)
+            {
+                if (ev.IsKeyDown) _shiftDown = true;
+                if (ev.IsKeyUp) _shiftDown = false;
+                return;
+            }
+
+            // CapsLock toggle trên KEYDOWN
+            if (vk == 0x14 && ev.IsKeyDown)
+            {
+                _capsOn = !_capsOn;
+                return;
+            }
+
+            // Chỉ “gõ chữ” khi KEYDOWN
+            if (!ev.IsKeyDown) return;
+
+            // Backspace
+            if (vk == 0x08)
+            {
+                if (_typedBuffer.Length > 0) _typedBuffer.Length--;
+                return;
+            }
+
+            // Dịch ra text
+            var txt = TranslateToText(vk, ev.ScanCode);
+            if (!string.IsNullOrEmpty(txt))
+                _typedBuffer.Append(txt);
+        }
 
         private async Task ReplayKeyboardAndShowAsync(string keyboardCsvPath, CancellationToken ct)
         {
@@ -342,6 +455,11 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
                 return;
             }
 
+            // Reset trạng thái typed trước khi replay
+            _typedBuffer.Clear();
+            _shiftDown = false;
+            _capsOn = false;
+
             // Reset UI
             Dispatcher.Invoke(() =>
             {
@@ -350,6 +468,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
                 if (startTime.HasValue)
                     ReplayKeyboardText.AppendText($"startTime: {startTime.Value:yyyy-MM-dd HH:mm:ss.fff}\n");
                 ReplayKeyboardText.AppendText("--------------------------------------------------\n");
+                ReplayKeyboardText.AppendText("TYPED: \n\n");
                 ReplayKeyboardText.ScrollToEnd();
             });
 
@@ -365,22 +484,59 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
                 uint delta = (i == 0) ? 0 : (ev.Time - prevTime);
                 prevTime = ev.Time;
 
-                // Delay theo delta (ms). Nếu file của bạn là tick khác ms thì bạn scale tại đây.
                 if (delta > 0)
-                    await Task.Delay((int)Math.Min(delta, 10_000), ct); // chặn max 10s để tránh treo nếu log nhảy
+                    await Task.Delay((int)Math.Min(delta, 10_000), ct);
+
+                // ✅ Cập nhật buffer chữ theo event
+                ApplyKeyEventToTextBuffer(ev);
+
+                // (Optional) ký tự vừa sinh ra ở KEYDOWN (để show cạnh log)
+                string? produced = null;
+                if (ev.IsKeyDown)
+                {
+                    // Backspace & modifier & caps: không sinh char trực tiếp
+                    bool isShift = (ev.VkCode == 0x10 || ev.VkCode == 0xA0 || ev.VkCode == 0xA1);
+                    bool isCaps = (ev.VkCode == 0x14);
+                    bool isBack = (ev.VkCode == 0x08);
+
+                    if (!isShift && !isCaps && !isBack)
+                    {
+                        produced = TranslateToText(ev.VkCode, ev.ScanCode);
+
+                        // hiển thị ký tự đặc biệt cho dễ đọc
+                        if (produced == "\n") produced = "\\n";
+                        else if (produced == "\t") produced = "\\t";
+                        else if (produced == " ") produced = "[space]";
+                    }
+                    else if (isBack)
+                    {
+                        produced = "[backspace]";
+                    }
+                }
 
                 string action = ev.IsKeyDown ? "DOWN" : (ev.IsKeyUp ? "UP" : $"MSG=0x{ev.MsgId:X}");
                 string keyName = VkToKeyName(ev.VkCode);
 
-                string line = $"[+{delta}ms] {action,-6} VK=0x{ev.VkCode:X} ({keyName})  Scan=0x{ev.ScanCode:X}  Flags=0x{ev.Flags:X}\n";
+                string line = $"[+{delta}ms] {action,-4} VK=0x{ev.VkCode:X} ({keyName})  Scan=0x{ev.ScanCode:X}  Flags=0x{ev.Flags:X}";
+                if (!string.IsNullOrEmpty(produced))
+                    line += $"  => {produced}";
+                line += "\n";
 
                 Dispatcher.Invoke(() =>
                 {
                     ReplayKeyboardText.AppendText(line);
 
-                    // Giới hạn độ dài để TextBox không phình quá lớn (tuỳ bạn)
-                    if (ReplayKeyboardText.Text.Length > 200_000)
-                        ReplayKeyboardText.Text = ReplayKeyboardText.Text.Substring(ReplayKeyboardText.Text.Length - 150_000);
+                    // ✅ Update TYPED (hiển thị phần cuối để không quá dài)
+                    string typed = _typedBuffer.ToString();
+                    string tail = typed.Length > 200 ? typed.Substring(typed.Length - 200) : typed;
+
+                    ReplayKeyboardText.AppendText($"TYPED: {tail}\n\n");
+
+                    // Giới hạn độ dài để TextBox không phình quá lớn
+                    if (ReplayKeyboardText.Text.Length > 250_000)
+                    {
+                        ReplayKeyboardText.Text = ReplayKeyboardText.Text.Substring(ReplayKeyboardText.Text.Length - 200_000);
+                    }
 
                     ReplayKeyboardText.ScrollToEnd();
                 });
