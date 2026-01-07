@@ -37,12 +37,27 @@
 
                 <Separator Margin="0,20" Background="#E2E8F0"/>
 
-                <Button Content="Tải lại / Áp dụng" Click="BtnApplyFilter_Click" Margin="0,30,0,0" Height="40" Background="#3B82F6" Foreground="White" FontWeight="Bold" BorderThickness="0">
+               <!-- <Button Content="Tải lại / Áp dụng" Click="BtnApplyFilter_Click" Margin="0,30,0,0" Height="40" Background="#3B82F6" Foreground="White" FontWeight="Bold" BorderThickness="0">
                     <Button.Resources>
                         <Style TargetType="Border">
                             <Setter Property="CornerRadius" Value="8"/>
                         </Style>
                     </Button.Resources>
+                </Button> -->
+                <Button x:Name="BtnShowReport" 
+                    Content="📊 Xem Thống Kê" 
+                    Click="BtnShowReport_Click"
+                    Height="35" 
+                    Margin="0,10,0,0" 
+                    Background="#FF2196F3" 
+                    Foreground="White" 
+                    FontWeight="Bold"
+                    BorderThickness="0">
+                                <Button.Resources>
+                                    <Style TargetType="Border">
+                                        <Setter Property="CornerRadius" Value="5"/>
+                                    </Style>
+                                </Button.Resources>
                 </Button>
             </StackPanel>
         </Border>
@@ -95,27 +110,6 @@
                 </ListBox.ItemTemplate>
             </ListBox>
 
-            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
-                <Button Content="Xóa danh sách" Click="BtnClear_Click" Background="Transparent" Foreground="#EF4444" BorderBrush="#FECACA" BorderThickness="1" Width="120" Height="45" Margin="0,0,15,0">
-                    <Button.Resources>
-                        <Style TargetType="Border">
-                            <Setter Property="CornerRadius" Value="8"/>
-                        </Style>
-                    </Button.Resources>
-                </Button>
-
-                <Button Content="Phát lại (Replay)" Click="BtnReplay_Click" Background="#3B82F6" Foreground="White" FontWeight="Bold" BorderThickness="0" Width="180" Height="45">
-                    <Button.Effect>
-                        <DropShadowEffect Color="#3B82F6" BlurRadius="20" ShadowDepth="5" Opacity="0.3" Direction="270"/>
-                    </Button.Effect>
-                    <Button.Resources>
-                        <Style TargetType="Border">
-                            <Setter Property="CornerRadius" Value="8"/>
-                        </Style>
-                    </Button.Resources>
-                </Button>
-                
-            </StackPanel>
         </Grid>
     </Grid>
 </UserControl>
