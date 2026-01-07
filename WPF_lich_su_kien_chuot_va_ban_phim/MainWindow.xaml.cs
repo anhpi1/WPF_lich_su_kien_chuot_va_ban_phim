@@ -6,6 +6,8 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using WPF_lich_su_kien_chuot_va_ban_phim.View;
 using WPF_lich_su_kien_chuot_va_ban_phim.Model;
+using Brush = System.Windows.Media.Brush;
+
 
 namespace WPF_lich_su_kien_chuot_va_ban_phim
 {

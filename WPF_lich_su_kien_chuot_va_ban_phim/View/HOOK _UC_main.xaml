@@ -367,13 +367,13 @@
 					         VerticalScrollBarVisibility="Auto" Grid.RowSpan="4"/>
                 <TextBox Height="36" Margin="894,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="Box hiển thị" VerticalAlignment="Top" Width="161" TextChanged="TextBox_TextChanged" FontSize="24" FontWeight="Bold" TextAlignment="Center" Background="{x:Null}" HorizontalAlignment="Left"/>
 
-    
 
-                <Button Content="📂 Chọn thư mục Log" 
-                Click="BtnOpenFolder_Click" 
-                Width="150" Height="40" Margin="10"/>
 
-                <view:HOOK_UC_filter x:Name="MyFilterUC" Grid.Row="1"/>
+
+                            <Button Content="📂 Chọn thư mục Log" 
+                                Click="BtnOpenFolder_Click" 
+                                Width="150" Height="40" Margin="10"/>
+                <view:HOOK_UC_filter x:Name="MyFilterUC" Margin="0,104,0,76" Grid.RowSpan="5"/>
             </Grid>
         </Border>
     </Grid>

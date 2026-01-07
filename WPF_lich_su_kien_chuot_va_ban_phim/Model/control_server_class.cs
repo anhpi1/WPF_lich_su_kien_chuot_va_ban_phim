@@ -25,7 +25,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.Model
 
                 if (!File.Exists(serverPath))
                 {
-                    MessageBox.Show("Cannot find server.exe at: " + serverPath, "Error");
+                    System.Windows.MessageBox.Show("Cannot find server.exe at: " + serverPath, "Error");
                     return;
                 }
 
@@ -52,7 +52,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.Model
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error starting server: " + ex.Message);
+                System.Windows.MessageBox.Show("Error starting server: " + ex.Message);
             }
         }
         public void ConnectToPipeServer()
@@ -73,18 +73,18 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.Model
                 _pipeClient.Connect(5000); // Thử kết nối trong 5 giây (5000ms)
 
                 // Nếu dòng này chạy, tức là hPipe != INVALID_HANDLE_VALUE
-                MessageBox.Show("Đã kết nối thành công đến Server!");
+                System.Windows.MessageBox.Show("Đã kết nối thành công đến Server!");
 
                 // Lúc này kết nối đã mở, nhưng chưa gửi lệnh gì cả theo yêu cầu của bạn.
                 
             }
             catch (TimeoutException)
             {
-                MessageBox.Show("Không thể kết nối: Hết thời gian chờ (Server chưa bật?).");
+                System.Windows.MessageBox.Show("Không thể kết nối: Hết thời gian chờ (Server chưa bật?).");
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi kết nối: " + ex.Message);
+                System.Windows.MessageBox.Show("Lỗi kết nối: " + ex.Message);
             }
         }
         // Hàm gửi một chuỗi lệnh bất kỳ sang Server
@@ -95,10 +95,10 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.Model
                 // 1. Kiểm tra kết nối trước
                 if (_pipeClient == null || !_pipeClient.IsConnected)
                 {
-                    MessageBox.Show("Chưa kết nối đến Server! Vui lòng nhấn Connect trước.", "Cảnh báo");
+                    System.Windows.MessageBox.Show("Chưa kết nối đến Server! Vui lòng nhấn Connect trước.", "Cảnh báo");
                     return;
                 }
-                MessageBox.Show($"Command send: {command}");
+                System.Windows.MessageBox.Show($"Command send: {command}");
 
                 StreamWriter writer = new StreamWriter(_pipeClient);
                 writer.AutoFlush = true;
@@ -110,7 +110,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.Model
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi khi gửi lệnh: " + ex.Message);
+                System.Windows.MessageBox.Show("Lỗi khi gửi lệnh: " + ex.Message);
             }
         }
 

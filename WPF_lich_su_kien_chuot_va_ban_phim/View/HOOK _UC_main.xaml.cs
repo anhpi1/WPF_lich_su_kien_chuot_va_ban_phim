@@ -19,6 +19,8 @@ using System.Windows.Shapes;
 using WPF_lich_su_kien_chuot_va_ban_phim.Model;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Runtime.InteropServices;
+using System.Windows.Forms; // thêm using cho System.Windows.Forms
+
 
 
 
@@ -28,7 +30,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
     /// <summary>
     /// Interaction logic for HOOK__UC_main.xaml
     /// </summary>
-    public partial class HOOK__UC_main : UserControl
+    public partial class HOOK__UC_main : System.Windows.Controls.UserControl
     {
         private control_server_class controlServer;
         private string Selected_file_replay = "log\\mouse_log0.csv log\\keyboard_log0.csv";
@@ -257,7 +259,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
                 );
 
                 // Recursively scale children
-                if (child is Panel || child is ContentControl || child is UserControl)
+                if (child is System.Windows.Controls.Panel || child is ContentControl || child is System.Windows.Controls.UserControl)
                 {
                     ApplyScale(child);
                 }
@@ -274,7 +276,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
                 controlServer.SendCommand("STOP");
                 Record_on.Visibility = Visibility.Hidden;
                 Record_off.Visibility = Visibility.Visible;
-                Record.Foreground = (Brush)new BrushConverter().ConvertFrom("#FF979DA5");
+                Record.Foreground = (System.Windows.Media.Brush)new BrushConverter().ConvertFrom("#FF979DA5");
             }
             else
             {
@@ -282,7 +284,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
                 controlServer.SendCommand("START");
                 Record_on.Visibility = Visibility.Visible;
                 Record_off.Visibility = Visibility.Hidden;
-                Record.Foreground = (Brush)new BrushConverter().ConvertFrom("#3b82f6");
+                Record.Foreground = (System.Windows.Media.Brush)new BrushConverter().ConvertFrom("#3b82f6");
             }
             LoadFilePairs(@"server\log");
         }
@@ -677,8 +679,9 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
                         MouseData = ParseAutoU(p[5]),
                     };
 
-                    // Map kiểu file của bạn: 200/201/... => 0x200/0x201/...
-                    // Chỉ map khi nó đang ở dạng 200.. (decimal) chứ không phải 0x200
+                    // Map kiểu file của bạn: 200/201,... => 0x200/0x201/...
+
+                    // chỉ cần thỏa mãn 2 điều kiện: 1 là nhỏ hơn 0x200, 2 là lớn hơn 200
                     if (ev.MsgId >= 200 && ev.MsgId <= 0xFFFF && ev.MsgId < 0x200)
                     {
                         // trường hợp hiếm, bỏ qua
@@ -702,34 +705,27 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
         }
 
         private void BtnOpenFolder_Click(object sender, RoutedEventArgs e)
-
         {
-
-
-
+            // 1. Mở hộp thoại chọn file (để lấy đường dẫn thư mục)
             var dialog = new Microsoft.Win32.OpenFileDialog();
-
-            dialog.Title = "Chọn một file log bất kỳ trong thư mục";
-
-            dialog.Filter = "CSV Files|*.csv|All Files|*.*";
-
-
+            dialog.Title = "Chọn file logger.exe hoặc file log bất kỳ trong thư mục";
+            dialog.Filter = "All Files|*.*";
 
             if (dialog.ShowDialog() == true)
-
             {
-
-                // Lấy đường dẫn thư mục chứa file vừa chọn
-
+                // Lấy thư mục chứa file vừa chọn
                 string folderPath = System.IO.Path.GetDirectoryName(dialog.FileName);
 
-
-
-                MyFilterUC.LoadLogsFromFolder(folderPath);
-
+                if (!string.IsNullOrEmpty(folderPath))
+                {
+                    // 2. GỌI HÀM XỬ LÝ BÊN USER CONTROL
+                    // Đảm bảo tên hàm là ProcessAndLoadLogs (khớp với file UserControl bạn vừa sửa)
+                    MyFilterUC.ProcessAndLoadLogs(folderPath);
+                }
             }
+        }
+
 
 
         }
-    }
 }
