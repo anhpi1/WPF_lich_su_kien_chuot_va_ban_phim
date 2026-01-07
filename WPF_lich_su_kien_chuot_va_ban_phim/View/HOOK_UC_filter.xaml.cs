@@ -93,7 +93,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
         private List<LogEvent> _allEventsCache = new List<LogEvent>();
         public ObservableCollection<LogEvent> DisplayEvents { get; set; } = new ObservableCollection<LogEvent>();
         private const string EXE_FILENAME = "logger.exe";
-
+        private const string REAL_LOG_FOLDER = @"server\log\";
         public HOOK_UC_filter()
         {
             InitializeComponent();
@@ -101,6 +101,19 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
             if (txtSearch != null) txtSearch.TextChanged += (s, e) => ApplyFilter();
             if (cbMouse != null) { cbMouse.Checked += (s, e) => ApplyFilter(); cbMouse.Unchecked += (s, e) => ApplyFilter(); }
             if (cbKeyboard != null) { cbKeyboard.Checked += (s, e) => ApplyFilter(); cbKeyboard.Unchecked += (s, e) => ApplyFilter(); }
+
+            this.Loaded += (s, e) =>
+            {
+                if (Directory.Exists(REAL_LOG_FOLDER))
+                {
+                    ProcessAndLoadLogs(REAL_LOG_FOLDER);
+                }
+                else
+                {
+                    // Tuỳ bạn: báo nhẹ hoặc bỏ qua
+                    System.Windows.MessageBox.Show($"Không tìm thấy thư mục log mặc định:\n{REAL_LOG_FOLDER}");
+                }
+            };
         }
 
         // --- HÀM XỬ LÝ "THÔNG MINH" ---

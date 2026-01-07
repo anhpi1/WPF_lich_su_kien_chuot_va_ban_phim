@@ -704,26 +704,26 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
             // You can add your logic here, or leave it empty if you don't need to handle the event yet.
         }
 
-        private void BtnOpenFolder_Click(object sender, RoutedEventArgs e)
-        {
-            // 1. Mở hộp thoại chọn file (để lấy đường dẫn thư mục)
-            var dialog = new Microsoft.Win32.OpenFileDialog();
-            dialog.Title = "Chọn file logger.exe hoặc file log bất kỳ trong thư mục";
-            dialog.Filter = "All Files|*.*";
+        //private void BtnOpenFolder_Click(object sender, RoutedEventArgs e)
+        //{
+        //    // 1. Mở hộp thoại chọn file (để lấy đường dẫn thư mục)
+        //    var dialog = new Microsoft.Win32.OpenFileDialog();
+        //    dialog.Title = "Chọn file logger.exe hoặc file log bất kỳ trong thư mục";
+        //    dialog.Filter = "All Files|*.*";
 
-            if (dialog.ShowDialog() == true)
-            {
-                // Lấy thư mục chứa file vừa chọn
-                string folderPath = System.IO.Path.GetDirectoryName(dialog.FileName);
+        //    if (dialog.ShowDialog() == true)
+        //    {
+        //        // Lấy thư mục chứa file vừa chọn
+        //        string folderPath = System.IO.Path.GetDirectoryName(dialog.FileName);
 
-                if (!string.IsNullOrEmpty(folderPath))
-                {
-                    // 2. GỌI HÀM XỬ LÝ BÊN USER CONTROL
-                    // Đảm bảo tên hàm là ProcessAndLoadLogs (khớp với file UserControl bạn vừa sửa)
-                    MyFilterUC.ProcessAndLoadLogs(folderPath);
-                }
-            }
-        }
+        //        if (!string.IsNullOrEmpty(folderPath))
+        //        {
+        //            // 2. GỌI HÀM XỬ LÝ BÊN USER CONTROL
+        //            // Đảm bảo tên hàm là ProcessAndLoadLogs (khớp với file UserControl bạn vừa sửa)
+        //            MyFilterUC.ProcessAndLoadLogs(folderPath);
+        //        }
+        //    }
+        //}
 
 
 
