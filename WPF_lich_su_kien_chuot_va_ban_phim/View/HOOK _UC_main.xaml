@@ -282,7 +282,7 @@
 
                     </Grid>
                 </Grid>
-                
+
                 <!-- 
                 <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
                     <TextBlock Text="Replay Mode:" VerticalAlignment="Center" Margin="0,0,20,0" FontSize="20" Foreground="#FF979DA5"/>
@@ -329,39 +329,45 @@
                     </StackPanel>
                 </Border>
 
-                <ListBox Background="Transparent" 
-                BorderThickness="0" 
-                Grid.Row="1" 
-                Grid.RowSpan="4" 
-                Name="FilePairListBox" 
-                Margin="10" 
-                ItemContainerStyle="{StaticResource NeumorphicItemStyle}"
-                MouseLeftButtonUp="FilePairListBox_MouseLeftButtonUp" 
-                SelectionChanged="FilePairListBox_SelectionChanged">
+                <ListBox Background="Transparent"
+         BorderThickness="0"
+         Grid.Row="1"
+         Grid.RowSpan="4"
+         Name="FilePairListBox"
+         Margin="10"
+         ItemContainerStyle="{StaticResource NeumorphicItemStyle}"
+         MouseLeftButtonUp="FilePairListBox_MouseLeftButtonUp"
+         SelectionChanged="FilePairListBox_SelectionChanged"
+         Width="700"
+         HorizontalAlignment="Left">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}" 
+                       FontSize="16" 
+                       FontFamily="Segoe UI Semibold"
+                       VerticalAlignment="Center"
+                       TextWrapping="Wrap"
+                       TextAlignment="Left"/>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
 
-                                    <ListBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding}" 
-                              FontSize="16" 
-                              FontFamily="Segoe UI Semibold"
-                              VerticalAlignment="Center"/>
-                                        </DataTemplate>
-                                    </ListBox.ItemTemplate>
-                             </ListBox>
 
 
                 <TextBox x:Name="ReplayKeyboardText"
-					         Grid.Row="4"
-					         Margin="20"
-					         Height="120"
-					         FontFamily="Consolas"
-					         FontSize="14"
+					         Grid.Row="1"
+					         Margin="715,41,48,41"
+                            BorderThickness="5"
+                             BorderBrush="Black"
+					         FontFamily="Segoe UI Semibold"
+					         FontSize="24"
 					         IsReadOnly="False"
 					         TextWrapping="Wrap"
-					         VerticalScrollBarVisibility="Auto"/>
+					         VerticalScrollBarVisibility="Auto" Grid.RowSpan="4"/>
+                <TextBox Height="36" Margin="894,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="Box hiển thị" VerticalAlignment="Top" Width="161" TextChanged="TextBox_TextChanged" FontSize="24" FontWeight="Bold" TextAlignment="Center" Background="{x:Null}" HorizontalAlignment="Left"/>
 
 
-                </Grid>
+            </Grid>
         </Border>
     </Grid>
 </UserControl>

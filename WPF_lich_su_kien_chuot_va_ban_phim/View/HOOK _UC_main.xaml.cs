@@ -696,6 +696,9 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
             return result;
         }
 
-
+        private void TextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            // You can add your logic here, or leave it empty if you don't need to handle the event yet.
+        }
     }
 }
