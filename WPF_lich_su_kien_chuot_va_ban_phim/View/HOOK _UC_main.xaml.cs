@@ -133,7 +133,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
                 ReplayKeyboardText.Text +=
                     $"\n--- REPLAY MOUSE (simple) ---\n" +
                     $"file: {mouseCsvPath}\n";
-                    //+ $"rec: {recW}x{recH} -> cur: {curW}x{curH} scale: {sx:F3},{sy:F3}\n";
+                //+ $"rec: {recW}x{recH} -> cur: {curW}x{curH} scale: {sx:F3},{sy:F3}\n";
             });
 
             uint prevTime = events[0].Time;
@@ -158,7 +158,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
             Dispatcher.Invoke(() => ReplayKeyboardText.Text += "\n--- MOUSE DONE ---\n");
         }
 
-      
+
         private static string MapLegacyLogPath(string legacyPath)
         {
             legacyPath = NormalizeSlashes(legacyPath);
@@ -177,7 +177,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
                 return System.IO.Path.Combine(REAL_LOG_FOLDER, fileName);
             }
 
-            
+
             return legacyPath;
         }
 
@@ -699,6 +699,37 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
         private void TextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
         {
             // You can add your logic here, or leave it empty if you don't need to handle the event yet.
+        }
+
+        private void BtnOpenFolder_Click(object sender, RoutedEventArgs e)
+
+        {
+
+
+
+            var dialog = new Microsoft.Win32.OpenFileDialog();
+
+            dialog.Title = "Chọn một file log bất kỳ trong thư mục";
+
+            dialog.Filter = "CSV Files|*.csv|All Files|*.*";
+
+
+
+            if (dialog.ShowDialog() == true)
+
+            {
+
+                // Lấy đường dẫn thư mục chứa file vừa chọn
+
+                string folderPath = System.IO.Path.GetDirectoryName(dialog.FileName);
+
+
+
+                MyFilterUC.LoadLogsFromFolder(folderPath);
+
+            }
+
+
         }
     }
 }

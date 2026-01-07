@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:WPF_lich_su_kien_chuot_va_ban_phim.View"
+             xmlns:view="clr-namespace:WPF_lich_su_kien_chuot_va_ban_phim.View"
              mc:Ignorable="d" 
              d:DesignHeight="720" d:DesignWidth="1280">
     <UserControl.Resources>
@@ -366,7 +367,13 @@
 					         VerticalScrollBarVisibility="Auto" Grid.RowSpan="4"/>
                 <TextBox Height="36" Margin="894,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="Box hiển thị" VerticalAlignment="Top" Width="161" TextChanged="TextBox_TextChanged" FontSize="24" FontWeight="Bold" TextAlignment="Center" Background="{x:Null}" HorizontalAlignment="Left"/>
 
+    
 
+                <Button Content="📂 Chọn thư mục Log" 
+                Click="BtnOpenFolder_Click" 
+                Width="150" Height="40" Margin="10"/>
+
+                <view:HOOK_UC_filter x:Name="MyFilterUC" Grid.Row="1"/>
             </Grid>
         </Border>
     </Grid>
