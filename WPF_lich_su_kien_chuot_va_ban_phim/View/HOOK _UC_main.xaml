@@ -347,9 +347,21 @@
                               VerticalAlignment="Center"/>
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
-                </ListBox>
+                             </ListBox>
 
-            </Grid>
+
+                <TextBox x:Name="ReplayKeyboardText"
+					         Grid.Row="4"
+					         Margin="20"
+					         Height="120"
+					         FontFamily="Consolas"
+					         FontSize="14"
+					         IsReadOnly="False"
+					         TextWrapping="Wrap"
+					         VerticalScrollBarVisibility="Auto"/>
+
+
+                </Grid>
         </Border>
     </Grid>
 </UserControl>

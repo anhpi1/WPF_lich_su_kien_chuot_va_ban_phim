@@ -1,5 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,9 +18,6 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using WPF_lich_su_kien_chuot_va_ban_phim.Model;
 using static System.Runtime.InteropServices.JavaScript.JSType;
-using System.IO;
-using System.Linq;
-using System.Collections.Generic;
 
 
 namespace WPF_lich_su_kien_chuot_va_ban_phim.View
@@ -27,10 +28,43 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
     public partial class HOOK__UC_main : UserControl
     {
         private control_server_class controlServer;
-        private string Selected_file_replay = " log\\mouse_log0.csv log\\keyboard_log0.csv";
+        private string Selected_file_replay = "log\\mouse_log0.csv log\\keyboard_log0.csv";
         private double ScaleFactor => SystemParameters.PrimaryScreenHeight / 1080.0;
         private bool togger_record = false;
         private bool togger_replay = false;
+        private CancellationTokenSource? _replayCts;
+        private const string LOG_ALIAS = "log\\";
+        private const string REAL_LOG_FOLDER = @"server\log\";  // thư mục thật đang chứa file
+
+        private static string NormalizeSlashes(string p)
+        {
+            return (p ?? "").Trim().Replace('/', '\\');
+        }
+
+        // Nhận vào "log\keyboard_log18.csv" và trả về "server\log\keyboard_log18.csv"
+        private static string MapLegacyLogPath(string legacyPath)
+        {
+            legacyPath = NormalizeSlashes(legacyPath);
+
+            if (string.IsNullOrWhiteSpace(legacyPath))
+                return legacyPath;
+
+            // Nếu đã là đường dẫn tuyệt đối thì giữ nguyên
+            if (System.IO.Path.IsPathRooted(legacyPath))
+                return legacyPath;
+
+            // Nếu bắt đầu bằng "log\" thì thay bằng "server\log\"
+            if (legacyPath.StartsWith(LOG_ALIAS, StringComparison.OrdinalIgnoreCase))
+            {
+                string fileName = legacyPath.Substring(LOG_ALIAS.Length); // keyboard_log18.csv
+                return System.IO.Path.Combine(REAL_LOG_FOLDER, fileName);
+            }
+
+            // Trường hợp khác: cứ coi là relative từ thư mục chạy
+            return legacyPath;
+        }
+
+
 
         public HOOK__UC_main()
         {
@@ -138,29 +172,227 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
 
         private async void Button_Click_1(object sender, RoutedEventArgs e)
         {
-            Replay_on.Visibility = Visibility.Visible;
-            Replay_off.Visibility = Visibility.Hidden;
-            Replay.Foreground = (Brush)new BrushConverter().ConvertFrom("#3b82f6");
+            try
+            {
+                _replayCts?.Cancel();
+                _replayCts = new CancellationTokenSource();
 
-            string mode;
-            if (Mode0.IsChecked == true) mode = "0";
-            else if (Mode1.IsChecked == true) mode = "1";
-            else mode = "2";
+                string selected = FilePairListBox.SelectedItem as string ?? "";
+                selected = selected.Trim();
 
+                if (string.IsNullOrWhiteSpace(selected))
+                {
+                    ReplayKeyboardText.Text = "Bạn chưa chọn cặp file log trong danh sách.";
+                    return;
+                }
 
-            controlServer.SendCommand($"REPLAY {Selected_file_replay} {mode}");
-            await Task.Delay(200);
+                // Chuỗi dạng: "log\\mouse_log0.csv log\\keyboard_log0.csv"
+                var parts = selected.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
-            Replay_on.Visibility = Visibility.Hidden;
-            Replay_off.Visibility = Visibility.Visible;
-            Replay.Foreground = (Brush)new BrushConverter().ConvertFrom("#FF979DA5");
+                // Lấy legacy path từ item
+                string keyboardLegacy = parts.FirstOrDefault(p => p.ToLower().Contains("keyboard")) ?? "";
+                if (string.IsNullOrWhiteSpace(keyboardLegacy))
+                {
+                    ReplayKeyboardText.Text = "Không tìm thấy đường dẫn keyboard trong item đã chọn.";
+                    return;
+                }
 
-            // Delay 200ms để tạo hiệu ứng nhấn
-            
+                // ✅ Map sang đường dẫn thật
+                string keyboardPath = MapLegacyLogPath(keyboardLegacy);
 
-            // Phần "true" (thả)
-            
+                // Debug để bạn nhìn thấy map đúng chưa
+                ReplayKeyboardText.Text =
+                    $"Legacy keyboard: {keyboardLegacy}\n" +
+                    $"Mapped keyboard:  {keyboardPath}\n";
+
+                if (Mode1.IsChecked == true) // Keyboard
+                {
+                    await ReplayKeyboardAndShowAsync(keyboardPath, _replayCts.Token);
+                }
+                else if (Mode2.IsChecked == true) // Combine
+                {
+                    _ = ReplayKeyboardAndShowAsync(keyboardPath, _replayCts.Token);
+
+                    // TODO: gọi replay mouse theo engine của bạn (nếu có)
+                }
+                else
+                {
+                    ReplayKeyboardText.Text = "Mouse mode: không hiển thị keyboard.";
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                Dispatcher.Invoke(() => ReplayKeyboardText.AppendText("----- CANCELED -----\n"));
+            }
+            catch (Exception ex)
+            {
+                ReplayKeyboardText.Text = "Lỗi REPLAY: " + ex.Message;
+            }
         }
+
+
+
+
+        private static List<KeyboardReplayEvent> LoadKeyboardCsv(string path, out DateTime? startTime)
+        {
+            startTime = null;
+            var lines = File.ReadAllLines(path);
+
+            if (lines.Length < 3)
+                return new List<KeyboardReplayEvent>();
+
+            // 1) Parse metadata line (optional)
+            // version,1,startTime,2025-12-30 14:25:47.645,screenWidth,1920,screenHeight,1080
+            var meta = lines[0].Split(',');
+            for (int i = 0; i < meta.Length - 1; i++)
+            {
+                if (meta[i].Trim().Equals("startTime", StringComparison.OrdinalIgnoreCase))
+                {
+                    var s = meta[i + 1].Trim();
+                    if (DateTime.TryParseExact(
+                            s,
+                            "yyyy-MM-dd HH:mm:ss.fff",
+                            CultureInfo.InvariantCulture,
+                            DateTimeStyles.None,
+                            out var dt))
+                    {
+                        startTime = dt;
+                    }
+                    break;
+                }
+            }
+
+            // 2) Skip header line (lines[1]) and parse data from lines[2..]
+            var result = new List<KeyboardReplayEvent>();
+
+            for (int idx = 2; idx < lines.Length; idx++)
+            {
+                var line = lines[idx].Trim();
+                if (string.IsNullOrWhiteSpace(line)) continue;
+
+                var parts = line.Split(',');
+                if (parts.Length < 6) continue;
+
+                // Note: file của bạn đang là:
+                // Event(uint),MsgID(hex),Time(uint),VkCode(hex),ScanCode(hex),Flags(hex)
+                // nhưng data lại: 0,100,522...,32,3,0 (MsgID và VkCode có thể đang lưu dạng decimal hoặc hex không prefix)
+                // => Ta parse linh hoạt: nếu có chữ a-f thì parse hex, không thì decimal.
+
+                uint ParseAuto(string s)
+                {
+                    s = s.Trim();
+                    if (s.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+                        return Convert.ToUInt32(s.Substring(2), 16);
+
+                    bool looksHex = s.Any(ch => (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F'));
+                    return looksHex ? Convert.ToUInt32(s, 16) : Convert.ToUInt32(s, 10);
+                }
+
+                try
+                {
+                    var ev = new KeyboardReplayEvent
+                    {
+                        EventIndex = ParseAuto(parts[0]),
+                        MsgId = ParseAuto(parts[1]),
+                        Time = ParseAuto(parts[2]),
+                        VkCode = ParseAuto(parts[3]),
+                        ScanCode = ParseAuto(parts[4]),
+                        Flags = ParseAuto(parts[5]),
+                    };
+                    result.Add(ev);
+                }
+                catch
+                {
+                    // Nếu cần, bạn có thể log lỗi dòng tại đây
+                }
+            }
+
+            return result;
+        }
+        private static string VkToKeyName(uint vk)
+        {
+            try
+            {
+                var key = KeyInterop.KeyFromVirtualKey((int)vk);
+
+                // Nếu là A-Z hoặc 0-9, hiển thị char cho dễ nhìn
+                if (vk >= 0x30 && vk <= 0x39) return ((char)vk).ToString(); // 0-9
+                if (vk >= 0x41 && vk <= 0x5A) return ((char)vk).ToString(); // A-Z
+
+                return key.ToString();
+            }
+            catch
+            {
+                return "Unknown";
+            }
+        }
+
+        private async Task ReplayKeyboardAndShowAsync(string keyboardCsvPath, CancellationToken ct)
+        {
+            if (!File.Exists(keyboardCsvPath))
+            {
+                Dispatcher.Invoke(() => ReplayKeyboardText.Text = $"Không tìm thấy file: {keyboardCsvPath}");
+                return;
+            }
+
+            var events = LoadKeyboardCsv(keyboardCsvPath, out var startTime);
+            if (events.Count == 0)
+            {
+                Dispatcher.Invoke(() => ReplayKeyboardText.Text = "File keyboard rỗng hoặc không parse được.");
+                return;
+            }
+
+            // Reset UI
+            Dispatcher.Invoke(() =>
+            {
+                ReplayKeyboardText.Clear();
+                ReplayKeyboardText.AppendText($"Keyboard replay file: {keyboardCsvPath}\n");
+                if (startTime.HasValue)
+                    ReplayKeyboardText.AppendText($"startTime: {startTime.Value:yyyy-MM-dd HH:mm:ss.fff}\n");
+                ReplayKeyboardText.AppendText("--------------------------------------------------\n");
+                ReplayKeyboardText.ScrollToEnd();
+            });
+
+            // Replay theo delta tick
+            uint prevTime = events[0].Time;
+
+            for (int i = 0; i < events.Count; i++)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                var ev = events[i];
+
+                uint delta = (i == 0) ? 0 : (ev.Time - prevTime);
+                prevTime = ev.Time;
+
+                // Delay theo delta (ms). Nếu file của bạn là tick khác ms thì bạn scale tại đây.
+                if (delta > 0)
+                    await Task.Delay((int)Math.Min(delta, 10_000), ct); // chặn max 10s để tránh treo nếu log nhảy
+
+                string action = ev.IsKeyDown ? "DOWN" : (ev.IsKeyUp ? "UP" : $"MSG=0x{ev.MsgId:X}");
+                string keyName = VkToKeyName(ev.VkCode);
+
+                string line = $"[+{delta}ms] {action,-6} VK=0x{ev.VkCode:X} ({keyName})  Scan=0x{ev.ScanCode:X}  Flags=0x{ev.Flags:X}\n";
+
+                Dispatcher.Invoke(() =>
+                {
+                    ReplayKeyboardText.AppendText(line);
+
+                    // Giới hạn độ dài để TextBox không phình quá lớn (tuỳ bạn)
+                    if (ReplayKeyboardText.Text.Length > 200_000)
+                        ReplayKeyboardText.Text = ReplayKeyboardText.Text.Substring(ReplayKeyboardText.Text.Length - 150_000);
+
+                    ReplayKeyboardText.ScrollToEnd();
+                });
+            }
+
+            Dispatcher.Invoke(() =>
+            {
+                ReplayKeyboardText.AppendText("----- DONE -----\n");
+                ReplayKeyboardText.ScrollToEnd();
+            });
+        }
+
 
     }
 }
