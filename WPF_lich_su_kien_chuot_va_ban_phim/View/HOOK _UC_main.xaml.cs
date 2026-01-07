@@ -59,7 +59,106 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
             return (p ?? "").Trim().Replace('/', '\\');
         }
 
-        // Nhận vào "log\keyboard_log18.csv" và trả về "server\log\keyboard_log18.csv"
+        [DllImport("user32.dll")]
+        private static extern int GetSystemMetrics(int nIndex);
+        private const int SM_CXSCREEN = 0;
+        private const int SM_CYSCREEN = 1;
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct INPUT { public uint type; public InputUnion U; }
+        [StructLayout(LayoutKind.Explicit)]
+        private struct InputUnion { [FieldOffset(0)] public MOUSEINPUT mi; }
+        [StructLayout(LayoutKind.Sequential)]
+        private struct MOUSEINPUT
+        {
+            public int dx, dy;
+            public uint mouseData, dwFlags, time;
+            public IntPtr dwExtraInfo;
+        }
+
+        private const uint INPUT_MOUSE = 0;
+        private const uint MOUSEEVENTF_MOVE = 0x0001;
+        private const uint MOUSEEVENTF_ABSOLUTE = 0x8000;
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
+
+        private static void MoveMouseAbsolute(int x, int y)
+        {
+            int sw = GetSystemMetrics(SM_CXSCREEN);
+            int sh = GetSystemMetrics(SM_CYSCREEN);
+
+            int ax = (int)Math.Round(x * 65535.0 / (sw - 1));
+            int ay = (int)Math.Round(y * 65535.0 / (sh - 1));
+
+            var input = new INPUT
+            {
+                type = INPUT_MOUSE,
+                U = new InputUnion
+                {
+                    mi = new MOUSEINPUT
+                    {
+                        dx = ax,
+                        dy = ay,
+                        dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE
+                    }
+                }
+            };
+
+            SendInput(1, new[] { input }, Marshal.SizeOf(typeof(INPUT)));
+        }
+
+        private async Task ReplayMouseAndShowAsync(string mouseCsvPath, CancellationToken ct)
+        {
+            if (!File.Exists(mouseCsvPath))
+            {
+                Dispatcher.Invoke(() => ReplayKeyboardText.Text += $"\nKhông tìm thấy file mouse: {mouseCsvPath}");
+                return;
+            }
+
+            var events = LoadMouseCsv_Simple(mouseCsvPath, out int recW, out int recH);
+            if (events.Count == 0)
+            {
+                Dispatcher.Invoke(() => ReplayKeyboardText.Text += "\nMouse file rỗng hoặc parse lỗi.");
+                return;
+            }
+
+            int curW = GetSystemMetrics(SM_CXSCREEN);
+            int curH = GetSystemMetrics(SM_CYSCREEN);
+            double sx = (recW > 0) ? (curW * 1.0 / recW) : 1.0;
+            double sy = (recH > 0) ? (curH * 1.0 / recH) : 1.0;
+
+            Dispatcher.Invoke(() =>
+            {
+                ReplayKeyboardText.Text +=
+                    $"\n--- REPLAY MOUSE (simple) ---\n" +
+                    $"file: {mouseCsvPath}\n";
+                    //+ $"rec: {recW}x{recH} -> cur: {curW}x{curH} scale: {sx:F3},{sy:F3}\n";
+            });
+
+            uint prevTime = events[0].Time;
+
+            for (int i = 0; i < events.Count; i++)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                var ev = events[i];
+                uint delta = (i == 0) ? 0 : (ev.Time - prevTime);
+                prevTime = ev.Time;
+
+                if (delta > 0)
+                    await Task.Delay((int)Math.Min(delta, 2000), ct); // thô: chặn max 2s để khỏi treo
+
+                // Chỉ cần MOVE là đủ (MsgId 0x200)
+                int x = (int)Math.Round(ev.X * sx);
+                int y = (int)Math.Round(ev.Y * sy);
+                MoveMouseAbsolute(x, y);
+            }
+
+            Dispatcher.Invoke(() => ReplayKeyboardText.Text += "\n--- MOUSE DONE ---\n");
+        }
+
+      
         private static string MapLegacyLogPath(string legacyPath)
         {
             legacyPath = NormalizeSlashes(legacyPath);
@@ -78,7 +177,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
                 return System.IO.Path.Combine(REAL_LOG_FOLDER, fileName);
             }
 
-            // Trường hợp khác: cứ coi là relative từ thư mục chạy
+            
             return legacyPath;
         }
 
@@ -122,14 +221,14 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
             if (FilePairListBox.SelectedItem != null)
             {
                 Selected_file_replay = FilePairListBox.SelectedItem.ToString();
-                MessageBox.Show(Selected_file_replay, "Selected File Pair");
+                //MessageBox.Show(Selected_file_replay, "Selected File Pair");
 
-                LoadFilePairs(@"server\log");
+                //LoadFilePairs(@"server\log");
             }
         }
         private void FilePairListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-{
-}
+        {
+        }
 
 
         private void HOOK__UC_main_Loaded(object sender, RoutedEventArgs e)
@@ -165,7 +264,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
             }
         }
 
-       
+
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
@@ -209,6 +308,8 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
 
                 // Lấy legacy path từ item
                 string keyboardLegacy = parts.FirstOrDefault(p => p.ToLower().Contains("keyboard")) ?? "";
+                string mouseLegacy = parts.FirstOrDefault(p => p.ToLower().Contains("mouse")) ?? "";
+
                 if (string.IsNullOrWhiteSpace(keyboardLegacy))
                 {
                     ReplayKeyboardText.Text = "Không tìm thấy đường dẫn keyboard trong item đã chọn.";
@@ -217,11 +318,17 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
 
                 // ✅ Map sang đường dẫn thật
                 string keyboardPath = MapLegacyLogPath(keyboardLegacy);
+                string mousePath = MapLegacyLogPath(mouseLegacy);
+
 
                 // Debug để bạn nhìn thấy map đúng chưa
                 ReplayKeyboardText.Text =
                     $"Legacy keyboard: {keyboardLegacy}\n" +
                     $"Mapped keyboard:  {keyboardPath}\n";
+                ReplayKeyboardText.Text =
+                $"Legacy mouse: {mouseLegacy}\nMapped mouse: {mousePath}\n" +
+                $"Legacy keyboard: {keyboardLegacy}\nMapped keyboard: {keyboardPath}\n";
+
 
                 if (Mode1.IsChecked == true) // Keyboard
                 {
@@ -230,11 +337,13 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
                 else if (Mode2.IsChecked == true) // Combine
                 {
                     _ = ReplayKeyboardAndShowAsync(keyboardPath, _replayCts.Token);
+                    _ = ReplayMouseAndShowAsync(mousePath, _replayCts.Token);
 
-                    // TODO: gọi replay mouse theo engine của bạn (nếu có)
                 }
                 else
                 {
+
+                    _ = ReplayMouseAndShowAsync(mousePath, _replayCts.Token);
                     ReplayKeyboardText.Text = "Mouse mode: không hiển thị keyboard.";
                 }
             }
@@ -495,6 +604,97 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
             }
         }
 
+        private class MouseReplayEvent
+        {
+            public uint EventIndex { get; set; }
+            public uint MsgId { get; set; }      // 200 -> 0x200 (MOVE)
+            public uint Time { get; set; }
+            public int X { get; set; }
+            public int Y { get; set; }
+            public uint MouseData { get; set; }  // hex/dec đều được
+        }
+
+        private static List<MouseReplayEvent> LoadMouseCsv_Simple(string path, out int recW, out int recH)
+        {
+            recW = 0; recH = 0;
+
+            var lines = File.ReadAllLines(path);
+            if (lines.Length < 3) return new List<MouseReplayEvent>();
+
+            // metadata: version,1,startTime,...,screenWidth,1920,screenHeight,1080
+            var meta = lines[0].Split(',');
+            for (int i = 0; i < meta.Length - 1; i++)
+            {
+                string key = meta[i].Trim();
+                string val = meta[i + 1].Trim();
+
+                if (key.Equals("screenWidth", StringComparison.OrdinalIgnoreCase))
+                    int.TryParse(val, out recW);
+
+                if (key.Equals("screenHeight", StringComparison.OrdinalIgnoreCase))
+                    int.TryParse(val, out recH);
+            }
+
+            uint ParseAutoU(string s)
+            {
+                s = (s ?? "").Trim();
+                if (s.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+                    return Convert.ToUInt32(s.Substring(2), 16);
+
+                bool looksHex = s.Any(ch => (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F'));
+                return looksHex ? Convert.ToUInt32(s, 16) : Convert.ToUInt32(s, 10);
+            }
+
+            int ParseAutoI(string s)
+            {
+                s = (s ?? "").Trim();
+                bool looksHex = s.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ||
+                                s.Any(ch => (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F'));
+                if (s.StartsWith("0x", StringComparison.OrdinalIgnoreCase)) s = s.Substring(2);
+                return looksHex ? Convert.ToInt32(s, 16) : Convert.ToInt32(s, 10);
+            }
+
+            var result = new List<MouseReplayEvent>();
+
+            // data từ lines[2..]
+            for (int idx = 2; idx < lines.Length; idx++)
+            {
+                var line = lines[idx].Trim();
+                if (string.IsNullOrWhiteSpace(line)) continue;
+
+                var p = line.Split(',');
+                if (p.Length < 6) continue;
+
+                try
+                {
+                    var ev = new MouseReplayEvent
+                    {
+                        EventIndex = ParseAutoU(p[0]),
+                        MsgId = ParseAutoU(p[1]),
+                        Time = ParseAutoU(p[2]),
+                        X = ParseAutoI(p[3]),
+                        Y = ParseAutoI(p[4]),
+                        MouseData = ParseAutoU(p[5]),
+                    };
+
+                    // Map kiểu file của bạn: 200/201/... => 0x200/0x201/...
+                    // Chỉ map khi nó đang ở dạng 200.. (decimal) chứ không phải 0x200
+                    if (ev.MsgId >= 200 && ev.MsgId <= 0xFFFF && ev.MsgId < 0x200)
+                    {
+                        // trường hợp hiếm, bỏ qua
+                    }
+                    else if (ev.MsgId >= 200 && ev.MsgId <= 300) // 200,201,202,... theo log bạn đưa
+                    {
+                        ev.MsgId = 0x200 + (ev.MsgId - 200);
+                    }
+
+                    result.Add(ev);
+                }
+                catch { }
+            }
+
+            return result;
+        }
 
 
     }
