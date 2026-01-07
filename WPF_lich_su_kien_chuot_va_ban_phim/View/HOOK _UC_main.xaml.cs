@@ -455,24 +455,19 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
                 return;
             }
 
-            // Reset trạng thái typed trước khi replay
+            // Reset typed state
             _typedBuffer.Clear();
             _shiftDown = false;
             _capsOn = false;
 
-            // Reset UI
+            // Reset UI: chỉ hiển thị chữ
             Dispatcher.Invoke(() =>
             {
                 ReplayKeyboardText.Clear();
-                ReplayKeyboardText.AppendText($"Keyboard replay file: {keyboardCsvPath}\n");
-                if (startTime.HasValue)
-                    ReplayKeyboardText.AppendText($"startTime: {startTime.Value:yyyy-MM-dd HH:mm:ss.fff}\n");
-                ReplayKeyboardText.AppendText("--------------------------------------------------\n");
-                ReplayKeyboardText.AppendText("TYPED: \n\n");
+                ReplayKeyboardText.Text = "";      // bắt đầu trống
                 ReplayKeyboardText.ScrollToEnd();
             });
 
-            // Replay theo delta tick
             uint prevTime = events[0].Time;
 
             for (int i = 0; i < events.Count; i++)
@@ -487,67 +482,19 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
                 if (delta > 0)
                     await Task.Delay((int)Math.Min(delta, 10_000), ct);
 
-                // ✅ Cập nhật buffer chữ theo event
+                // ✅ Cập nhật buffer chữ theo event (KEYDOWN -> thêm ký tự, Backspace -> xoá, ...)
                 ApplyKeyEventToTextBuffer(ev);
 
-                // (Optional) ký tự vừa sinh ra ở KEYDOWN (để show cạnh log)
-                string? produced = null;
-                if (ev.IsKeyDown)
-                {
-                    // Backspace & modifier & caps: không sinh char trực tiếp
-                    bool isShift = (ev.VkCode == 0x10 || ev.VkCode == 0xA0 || ev.VkCode == 0xA1);
-                    bool isCaps = (ev.VkCode == 0x14);
-                    bool isBack = (ev.VkCode == 0x08);
-
-                    if (!isShift && !isCaps && !isBack)
-                    {
-                        produced = TranslateToText(ev.VkCode, ev.ScanCode);
-
-                        // hiển thị ký tự đặc biệt cho dễ đọc
-                        if (produced == "\n") produced = "\\n";
-                        else if (produced == "\t") produced = "\\t";
-                        else if (produced == " ") produced = "[space]";
-                    }
-                    else if (isBack)
-                    {
-                        produced = "[backspace]";
-                    }
-                }
-
-                string action = ev.IsKeyDown ? "DOWN" : (ev.IsKeyUp ? "UP" : $"MSG=0x{ev.MsgId:X}");
-                string keyName = VkToKeyName(ev.VkCode);
-
-                string line = $"[+{delta}ms] {action,-4} VK=0x{ev.VkCode:X} ({keyName})  Scan=0x{ev.ScanCode:X}  Flags=0x{ev.Flags:X}";
-                if (!string.IsNullOrEmpty(produced))
-                    line += $"  => {produced}";
-                line += "\n";
-
+                // ✅ Update UI theo nhịp replay (KHÔNG append dòng mới)
                 Dispatcher.Invoke(() =>
                 {
-                    ReplayKeyboardText.AppendText(line);
-
-                    // ✅ Update TYPED (hiển thị phần cuối để không quá dài)
-                    string typed = _typedBuffer.ToString();
-                    string tail = typed.Length > 200 ? typed.Substring(typed.Length - 200) : typed;
-
-                    ReplayKeyboardText.AppendText($"TYPED: {tail}\n\n");
-
-                    // Giới hạn độ dài để TextBox không phình quá lớn
-                    if (ReplayKeyboardText.Text.Length > 250_000)
-                    {
-                        ReplayKeyboardText.Text = ReplayKeyboardText.Text.Substring(ReplayKeyboardText.Text.Length - 200_000);
-                    }
-
+                    ReplayKeyboardText.Text = _typedBuffer.ToString();
+                    ReplayKeyboardText.CaretIndex = ReplayKeyboardText.Text.Length; // con trỏ cuối
                     ReplayKeyboardText.ScrollToEnd();
                 });
             }
-
-            Dispatcher.Invoke(() =>
-            {
-                ReplayKeyboardText.AppendText("----- DONE -----\n");
-                ReplayKeyboardText.ScrollToEnd();
-            });
         }
+
 
 
     }
