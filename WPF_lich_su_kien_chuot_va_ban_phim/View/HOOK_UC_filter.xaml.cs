@@ -4,7 +4,6 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -13,12 +12,10 @@ using WinForms = System.Windows.Forms;
 using Brush = System.Windows.Media.Brush;
 using Brushes = System.Windows.Media.Brushes;
 
-
-
 namespace WPF_lich_su_kien_chuot_va_ban_phim.View
 {
     // ==========================================
-    // 1. CLASS DỮ LIỆU (MODEL)
+    // 1. CLASS DỮ LIỆU CHUNG
     // ==========================================
     public class LogEvent
     {
@@ -32,13 +29,13 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
         public Brush IconBgColor => Type == "MOUSE" ? Brushes.AliceBlue : Brushes.Honeydew;
         public Brush TextColor => Type == "MOUSE" ? Brushes.RoyalBlue : Brushes.SeaGreen;
 
-        // Xử lý dòng từ file kết quả chi tiết
-        public static LogEvent FromDetailedCsv(string line)
+        // ========== PHƯƠNG THỨC CHO FILE KẾT QUẢ TỪ LOGGER.EXE (ĐƯỜNG DẪN ĐỘC LẬP) ==========
+        public static LogEvent FromProcessedCsv(string line, string sourceFolder = "")
         {
             try
             {
                 var parts = line.Split(',');
-                if (parts.Length < 4 || !long.TryParse(parts[3], out long t)) return null;
+                if (parts.Length < 9 || !long.TryParse(parts[3], out long t)) return null;
 
                 bool isKey = parts[0].Trim() == "1";
                 string actionInfo = "";
@@ -56,13 +53,51 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
                     Time = t,
                     Type = isKey ? "KEYBOARD" : "MOUSE",
                     DecodedAction = actionInfo,
-                    SourceFile = "Bang_chi_tiet_su_kien.csv"
+                    SourceFile = string.IsNullOrEmpty(sourceFolder) ? "merged_log.csv" : sourceFolder
                 };
             }
             catch { return null; }
         }
 
-        private static uint ParseHex(string hex) { try { return Convert.ToUInt32(hex.Trim(), 16); } catch { return 0; } }
+        // ========== PHƯƠNG THỨC CHO FILE LOG THÔ (ĐƯỜNG DẪN ĐỘC LẬP) ==========
+        public static LogEvent FromRawCsv(string filename, string line)
+        {
+            try
+            {
+                if (line.StartsWith("version") || line.StartsWith("Event")) return null;
+                var parts = line.Split(',');
+                if (parts.Length < 6) return null;
+
+                // Keyboard Raw: 0:Idx, 1:MsgID, 2:Time, 3:Vk, 4:Scan, 5:Flags
+                // Mouse Raw:    0:Idx, 1:MsgID, 2:Time, 3:X,  4:Y,   5:Data
+
+                bool isKey = filename.ToLower().Contains("key");
+                uint msgId = ParseHex(parts[1]);
+                long time = long.Parse(parts[2]);
+
+                var evt = new LogEvent { Time = time, SourceFile = filename };
+
+                if (isKey)
+                {
+                    evt.Type = "KEYBOARD";
+                    evt.DecodedAction = DecodeKeyboard(msgId, (int)ParseHex(parts[3]));
+                }
+                else
+                {
+                    evt.Type = "MOUSE";
+                    evt.DecodedAction = DecodeMouse(msgId);
+                    if (parts.Length >= 5) evt.DecodedAction += $" ({parts[3]}, {parts[4]})";
+                }
+                return evt;
+            }
+            catch { return null; }
+        }
+
+        private static uint ParseHex(string hex)
+        {
+            try { return Convert.ToUInt32(hex.Trim(), 16); }
+            catch { return 0; }
+        }
 
         private static string DecodeMouse(uint id) => id switch
         {
@@ -84,7 +119,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
     }
 
     // ==========================================
-    // 2. CLASS GIAO DIỆN CHÍNH (VIEW)
+    // 2. CLASS GIAO DIỆN CHÍNH
     // ==========================================
     public partial class HOOK_UC_filter : System.Windows.Controls.UserControl
     {
@@ -92,188 +127,273 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
         public ObservableCollection<LogEvent> DisplayEvents { get; set; } = new ObservableCollection<LogEvent>();
 
         private const string EXE_FILENAME = "logger.exe";
-        private string _serverPath; // Đường dẫn đến thư mục 'server'
-        private string _logPath;    // Đường dẫn đến thư mục 'server/log'
+        private string _logFolder;          // Thư mục log gốc
+        private string _serverFolder;       // Thư mục server chứa exe
         private string _cachedReportContent = "Chưa có dữ liệu thống kê.";
 
         public HOOK_UC_filter()
         {
             InitializeComponent();
 
-            // 1. CẤU HÌNH ĐƯỜNG DẪN DỰA TRÊN ẢNH BẠN GỬI
-            // App chạy tại .../bin/Debug/net8.0-windows/
+            // THIẾT LẬP ĐƯỜNG DẪN ĐỘC LẬP
             string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-            _serverPath = Path.Combine(baseDir, "server");
-            _logPath = Path.Combine(_serverPath, "log");
+            _serverFolder = Path.Combine(baseDir, "server");      // Đường dẫn độc lập cho exe
+            _logFolder = Path.Combine(_serverFolder, "log");      // Đường dẫn độc lập cho log
 
             // Setup Binding UI
             if (lstEvents != null) lstEvents.ItemsSource = DisplayEvents;
             if (txtSearch != null) txtSearch.TextChanged += (s, e) => ApplyFilter();
-            if (cbMouse != null) { cbMouse.Checked += (s, e) => ApplyFilter(); cbMouse.Unchecked += (s, e) => ApplyFilter(); }
-            if (cbKeyboard != null) { cbKeyboard.Checked += (s, e) => ApplyFilter(); cbKeyboard.Unchecked += (s, e) => ApplyFilter(); }
+            if (cbMouse != null)
+            {
+                cbMouse.Checked += (s, e) => ApplyFilter();
+                cbMouse.Unchecked += (s, e) => ApplyFilter();
+            }
+            if (cbKeyboard != null)
+            {
+                cbKeyboard.Checked += (s, e) => ApplyFilter();
+                cbKeyboard.Unchecked += (s, e) => ApplyFilter();
+            }
 
             this.Loaded += HOOK_UC_filter_Loaded;
         }
 
         private void HOOK_UC_filter_Loaded(object sender, RoutedEventArgs e)
         {
-            // Tự động chạy khi mở App
-            ProcessAndLoadLogs();
+            LoadAllData();
         }
 
-        public async void ProcessAndLoadLogs()
+        // ========== HÀM TẢI TOÀN BỘ DỮ LIỆU ==========
+        private async void LoadAllData()
         {
             if (lblCount != null) lblCount.Text = "Đang xử lý dữ liệu...";
-            DisplayEvents.Clear(); _allEventsCache.Clear();
+            DisplayEvents.Clear();
+            _allEventsCache.Clear();
 
-            // Gọi hàm chạy Tool
-            bool toolSuccess = await RunLoggerToolAndBypassWait();
+            // XỬ LÝ ĐỘC LẬP: Nhật ký sự kiện
+            bool logLoaded = await LoadEventLogs();
 
-            // Sắp xếp và hiển thị kết quả
-            _allEventsCache = _allEventsCache.OrderBy(x => x.Time).ToList();
-            ApplyFilter();
+            // XỬ LÝ ĐỘC LẬP: Báo cáo thống kê
+            bool reportLoaded = await LoadStatisticsReport();
+
+            // Hiển thị kết quả
+            if (logLoaded)
+            {
+                _allEventsCache = _allEventsCache.OrderBy(x => x.Time).ToList();
+                ApplyFilter();
+            }
 
             if (lblCount != null)
-                lblCount.Text = toolSuccess
-                ? $"Đã tải {_allEventsCache.Count} sự kiện."
-                : "Không có dữ liệu hoặc lỗi Tool.";
+            {
+                string status = $"Sự kiện: {_allEventsCache.Count} | ";
+                status += reportLoaded ? "Đã tải báo cáo" : "Không có báo cáo";
+                lblCount.Text = status;
+            }
+
+            if (!logLoaded && !reportLoaded)
+            {
+                System.Windows.MessageBox.Show("Không tìm thấy dữ liệu nào trong các file log.");
+            }
         }
 
-        private async Task<bool> RunLoggerToolAndBypassWait()
+        // ========== XỬ LÝ ĐỘC LẬP 1: NHẬT KÝ SỰ KIỆN ==========
+        private async Task<bool> LoadEventLogs()
         {
             return await Task.Run(() =>
             {
-                string tempDir = "";
                 try
                 {
-                    // --- BƯỚC 1: KIỂM TRA FILE GỐC (Validation) ---
-                    if (!Directory.Exists(_serverPath)) return false;
-
-                    string exeSource = Path.Combine(_serverPath, EXE_FILENAME);
-                    if (!File.Exists(exeSource))
+                    // Kiểm tra đường dẫn log
+                    if (!Directory.Exists(_logFolder))
                     {
-                        Dispatcher.Invoke(() => System.Windows.MessageBox.Show($"LỖI: Không tìm thấy file chạy!\nApp đang tìm tại: {exeSource}"));
+                        Dispatcher.Invoke(() =>
+                            System.Windows.MessageBox.Show($"Không tìm thấy thư mục log:\n{_logFolder}"));
                         return false;
                     }
-                    if (!Directory.Exists(_logPath)) Directory.CreateDirectory(_logPath);
 
-                    // --- BƯỚC 2: TẠO MÔI TRƯỜNG TEMP (GIẢ LẬP CẤU TRÚC SERVER) ---
-                    // Lý do dùng Temp: Để tránh lỗi "File đang được sử dụng" và không làm rác thư mục gốc.
-                    tempDir = Path.Combine(Path.GetTempPath(), "LogTool_" + Guid.NewGuid());
-                    Directory.CreateDirectory(tempDir); // Đây đóng vai trò là thư mục "server" giả
+                    // PHƯƠNG PHÁP 1: DÙNG LOGGER.EXE (ƯU TIÊN)
+                    bool toolSuccess = TryProcessWithLoggerExe();
 
-                    // Tạo thư mục con "log" bên trong Temp
-                    string tempLogDir = Path.Combine(tempDir, "log");
-                    Directory.CreateDirectory(tempLogDir);
-
-                    // --- BƯỚC 3: COPY FILE VÀO TEMP ---
-
-                    // A. Copy logger.exe và các file phụ trợ (dll, json) vào root Temp
-                    File.Copy(exeSource, Path.Combine(tempDir, EXE_FILENAME), true);
-                    foreach (var f in Directory.GetFiles(_serverPath, "*.dll")) File.Copy(f, Path.Combine(tempDir, Path.GetFileName(f)), true);
-                    foreach (var f in Directory.GetFiles(_serverPath, "*.json")) File.Copy(f, Path.Combine(tempDir, Path.GetFileName(f)), true);
-
-                    // B. Copy các file CSV từ server/log vào temp/log
-                    // ĐẶC BIỆT: Đổi tên file về chuẩn "key.csv" và "mouse.csv" để Tool nhận diện
-                    var csvFiles = Directory.GetFiles(_logPath, "*.csv");
-                    bool kFound = false, mFound = false;
-
-                    foreach (var f in csvFiles)
+                    // PHƯƠNG PHÁP 2: ĐỌC TRỰC TIẾP FILE THÔ (FALLBACK)
+                    if (!toolSuccess)
                     {
-                        string fname = Path.GetFileName(f).ToLower();
-                        // Bỏ qua các file kết quả cũ
-                        if (fname.Contains("bang_chi_tiet") || fname.Contains("merged") || fname.Contains("bao_cao")) continue;
-
-                        string destName = Path.GetFileName(f); // Mặc định giữ tên cũ
-
-                        // Ưu tiên đổi tên file đầu tiên tìm thấy
-                        if (fname.Contains("key") && !kFound) { destName = "key.csv"; kFound = true; }
-                        else if (fname.Contains("mouse") && !mFound) { destName = "mouse.csv"; mFound = true; }
-
-                        // Copy vào bên trong folder log của Temp
-                        File.Copy(f, Path.Combine(tempLogDir, destName), true);
+                        LoadRawLogsDirectly();
                     }
 
-                    // --- BƯỚC 4: CHẠY TOOL ---
-                    var procInfo = new ProcessStartInfo(Path.Combine(tempDir, EXE_FILENAME))
-                    {
-                        WorkingDirectory = tempDir, // Chạy tại root Temp (nơi có exe và folder log bên cạnh)
-                        CreateNoWindow = true,      // Ẩn cửa sổ đen
-                        UseShellExecute = false,
-                        RedirectStandardInput = true
-                    };
-
-                    using (var p = Process.Start(procInfo))
-                    {
-                        p.StandardInput.WriteLine(); // Giả lập bấm Enter
-                        p.WaitForExit(5000);         // Chờ tối đa 5s
-                    }
-
-                    // --- BƯỚC 5: ĐỌC KẾT QUẢ ---
-                    // Theo ảnh của bạn, file kết quả sinh ra ngay cạnh file exe (tức là tại tempDir)
-
-                    // 1. Đọc Báo Cáo Thống Kê (TXT)
-                    string reportFile = Path.Combine(tempDir, "Bao_cao_thong_ke.txt");
-                    // Kiểm tra dự phòng trong folder processed nếu tool đổi nết
-                    if (!File.Exists(reportFile)) reportFile = Path.Combine(tempDir, "processed", "Bao_cao_thong_ke.txt");
-
-                    // [QUAN TRỌNG] Fallback: Nếu Temp lỗi, thử tìm file báo cáo cũ ở thư mục gốc (server)
-                    if (!File.Exists(reportFile)) reportFile = Path.Combine(_serverPath, "Bao_cao_thong_ke.txt");
-
-                    if (File.Exists(reportFile))
-                    {
-                        string content = File.ReadAllText(reportFile);
-                        Dispatcher.Invoke(() => _cachedReportContent = content);
-                    }
-
-                    // 2. Đọc Bảng Chi Tiết (CSV)
-                    string resultCsv = Path.Combine(tempDir, "Bang_chi_tiet_su_kien.csv");
-                    if (!File.Exists(resultCsv)) resultCsv = Path.Combine(tempDir, "processed", "merged_log.csv");
-                    // Fallback về thư mục gốc
-                    if (!File.Exists(resultCsv)) resultCsv = Path.Combine(_serverPath, "Bang_chi_tiet_su_kien.csv");
-
-                    if (File.Exists(resultCsv))
-                    {
-                        var lines = File.ReadAllLines(resultCsv);
-                        foreach (var line in lines)
-                        {
-                            var evt = LogEvent.FromDetailedCsv(line);
-                            if (evt != null) _allEventsCache.Add(evt);
-                        }
-                        return _allEventsCache.Count > 0;
-                    }
-
-                    return false;
+                    return _allEventsCache.Count > 0;
                 }
                 catch (Exception ex)
                 {
-                    Dispatcher.Invoke(() => System.Windows.MessageBox.Show("Lỗi xử lý: " + ex.Message));
+                    Dispatcher.Invoke(() =>
+                        System.Windows.MessageBox.Show($"Lỗi tải nhật ký: {ex.Message}"));
                     return false;
-                }
-                finally
-                {
-                    // Dọn dẹp thư mục Temp sau khi xong
-                    try { if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true); } catch { }
                 }
             });
         }
 
-        // --- CÁC HÀM UI ---
+        private bool TryProcessWithLoggerExe()
+        {
+            string tempDir = "";
+            try
+            {
+                // KIỂM TRA ĐƯỜNG DẪN ĐỘC LẬP CHO EXE
+                string exePath = Path.Combine(_serverFolder, EXE_FILENAME);
+                if (!File.Exists(exePath))
+                {
+                    return false;
+                }
+
+                // TẠO MÔI TRƯỜNG TEMP ĐỘC LẬP
+                tempDir = Path.Combine(Path.GetTempPath(), "LogTool_" + Guid.NewGuid());
+                Directory.CreateDirectory(tempDir);
+
+                // SAO CHÉP EXE VÀ CÁC FILE PHỤ TRỢ
+                File.Copy(exePath, Path.Combine(tempDir, EXE_FILENAME), true);
+
+                // SAO CHÉP LOG VỚI ĐƯỜNG DẪN ĐỘC LẬP
+                var files = Directory.GetFiles(_logFolder, "*.csv");
+                int kCount = 1, mCount = 1;
+
+                foreach (var f in files.OrderBy(n => n))
+                {
+                    var info = new FileInfo(f);
+                    if (info.Length < 100) continue;
+
+                    if (f.ToLower().Contains("keyboard"))
+                        File.Copy(f, Path.Combine(tempDir, $"keyboard_log{kCount++}.csv"), true);
+                    if (f.ToLower().Contains("mouse"))
+                        File.Copy(f, Path.Combine(tempDir, $"mouse_log{mCount++}.csv"), true);
+                }
+
+                Directory.CreateDirectory(Path.Combine(tempDir, "processed"));
+
+                // CHẠY TOOL VỚI ĐƯỜNG DẪN TEMP ĐỘC LẬP
+                var procInfo = new ProcessStartInfo(Path.Combine(tempDir, EXE_FILENAME))
+                {
+                    WorkingDirectory = tempDir,
+                    CreateNoWindow = true,
+                    UseShellExecute = false
+                };
+
+                using (var p = Process.Start(procInfo))
+                    p.WaitForExit(5000);
+
+                // ĐỌC KẾT QUẢ TỪ ĐƯỜNG DẪN TEMP
+                string resultFile = Path.Combine(tempDir, "processed", "merged_log.csv");
+                if (File.Exists(resultFile))
+                {
+                    var lines = File.ReadAllLines(resultFile);
+                    foreach (var line in lines)
+                    {
+                        var evt = LogEvent.FromProcessedCsv(line, "Logger Tool Output");
+                        if (evt != null) _allEventsCache.Add(evt);
+                    }
+                    return _allEventsCache.Count > 0;
+                }
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
+            finally
+            {
+                // DỌN DẸP TEMP
+                try
+                {
+                    if (Directory.Exists(tempDir))
+                        Directory.Delete(tempDir, true);
+                }
+                catch { }
+            }
+        }
+
+        private void LoadRawLogsDirectly()
+        {
+            var files = Directory.GetFiles(_logFolder, "*.csv");
+            foreach (var f in files)
+            {
+                if (Path.GetFileName(f).ToLower().Contains("bang_chi_tiet") ||
+                    Path.GetFileName(f).ToLower().Contains("merged"))
+                    continue;
+
+                try
+                {
+                    var lines = File.ReadAllLines(f);
+                    foreach (var line in lines)
+                    {
+                        var evt = LogEvent.FromRawCsv(Path.GetFileName(f), line);
+                        if (evt != null) _allEventsCache.Add(evt);
+                    }
+                }
+                catch { }
+            }
+        }
+
+        // ========== XỬ LÝ ĐỘC LẬP 2: BÁO CÁO THỐNG KÊ ==========
+        private async Task<bool> LoadStatisticsReport()
+        {
+            return await Task.Run(() =>
+            {
+                try
+                {
+                    // KIỂM TRA ĐƯỜNG DẪN ĐỘC LẬP CHO BÁO CÁO
+                    string reportFile = "";
+
+                    // ƯU TIÊN 1: File báo cáo trong server folder
+                    reportFile = Path.Combine(_serverFolder, "Bao_cao_thong_ke.txt");
+
+                    // ƯU TIÊN 2: File trong log folder
+                    if (!File.Exists(reportFile))
+                        reportFile = Path.Combine(_logFolder, "Bao_cao_thong_ke.txt");
+
+                    // ƯU TIÊN 3: Tìm trong toàn bộ thư mục server
+                    if (!File.Exists(reportFile))
+                    {
+                        var allReportFiles = Directory.GetFiles(_serverFolder, "Bao_cao_thong_ke.txt", SearchOption.AllDirectories);
+                        if (allReportFiles.Length > 0)
+                            reportFile = allReportFiles[0];
+                    }
+
+                    if (File.Exists(reportFile))
+                    {
+                        _cachedReportContent = File.ReadAllText(reportFile, System.Text.Encoding.UTF8);
+                        return true;
+                    }
+                    else
+                    {
+                        _cachedReportContent = "Không tìm thấy file báo cáo thống kê.";
+                        return false;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _cachedReportContent = $"Lỗi đọc báo cáo: {ex.Message}";
+                    return false;
+                }
+            });
+        }
+
+        // ========== CÁC HÀM UI ==========
         private void ApplyFilter()
         {
             if (DisplayEvents == null) return;
+
             string kw = txtSearch?.Text.ToLower() ?? "";
             bool m = cbMouse?.IsChecked ?? true;
             bool k = cbKeyboard?.IsChecked ?? true;
 
-            var result = _allEventsCache.Where(x => {
+            var result = _allEventsCache.Where(x =>
+            {
                 if (x.Type == "MOUSE" && !m) return false;
                 if (x.Type == "KEYBOARD" && !k) return false;
-                return string.IsNullOrEmpty(kw) || (x.DecodedAction?.ToLower().Contains(kw) ?? false);
+                return string.IsNullOrEmpty(kw) ||
+                       (x.DecodedAction?.ToLower().Contains(kw) ?? false) ||
+                       (x.SourceFile?.ToLower().Contains(kw) ?? false);
             });
 
             DisplayEvents.Clear();
-            foreach (var item in result) DisplayEvents.Add(item);
+            foreach (var item in result)
+                DisplayEvents.Add(item);
         }
 
         private void BtnApplyFilter_Click(object sender, RoutedEventArgs e) => ApplyFilter();
@@ -282,17 +402,25 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
         {
             DisplayEvents.Clear();
             _allEventsCache.Clear();
-            if (lblCount != null) lblCount.Text = "Đã xóa dữ liệu hiển thị.";
+            _cachedReportContent = "Đã xóa dữ liệu.";
+            if (lblCount != null)
+                lblCount.Text = "Đã xóa dữ liệu.";
         }
 
         private void BtnReplay_Click(object sender, RoutedEventArgs e)
         {
-            System.Windows.MessageBox.Show("Chức năng Replay chưa khả dụng.", "Thông báo");
+            System.Windows.MessageBox.Show("Chức năng Replay đang phát triển...", "Thông báo");
         }
 
         private void BtnShowReport_Click(object sender, RoutedEventArgs e)
         {
-            System.Windows.MessageBox.Show(_cachedReportContent, "Báo Cáo Thống Kê & Combo");
+            System.Windows.MessageBox.Show(_cachedReportContent, "BÁO CÁO THỐNG KÊ & COMBO",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void BtnRefresh_Click(object sender, RoutedEventArgs e)
+        {
+            LoadAllData();
         }
     }
 }
