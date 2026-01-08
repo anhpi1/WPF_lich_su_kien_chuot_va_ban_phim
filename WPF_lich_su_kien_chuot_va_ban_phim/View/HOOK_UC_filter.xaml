@@ -33,17 +33,18 @@
                 <StackPanel>
                     <CheckBox x:Name="cbMouse" Content="Mouse (Chuột)" IsChecked="True" Margin="0,5" Foreground="#334155" FontSize="14"/>
                     <CheckBox x:Name="cbKeyboard" Content="Keyboard (Phím)" IsChecked="True" Margin="0,5" Foreground="#334155" FontSize="14"/>
+                    <CheckBox x:Name="cbOnlyCombo" Content="🔥 Chỉ hiện Combo" Foreground="#DC2626" FontWeight="Bold" Margin="0,10,0,5" FontSize="14"/>
                 </StackPanel>
 
                 <Separator Margin="0,20" Background="#E2E8F0"/>
 
-               <!-- <Button Content="Tải lại / Áp dụng" Click="BtnApplyFilter_Click" Margin="0,30,0,0" Height="40" Background="#3B82F6" Foreground="White" FontWeight="Bold" BorderThickness="0">
+                <Button Content="Refresh" Click="BtnRefresh_Click" Margin="0,30,0,0" Height="40" Background="#3B82F6" Foreground="White" FontWeight="Bold" BorderThickness="0">
                     <Button.Resources>
                         <Style TargetType="Border">
                             <Setter Property="CornerRadius" Value="8"/>
                         </Style>
                     </Button.Resources>
-                </Button> -->
+                </Button> 
                 <Button x:Name="BtnShowReport" 
                     Content="📊 Xem Thống Kê" 
                     Click="BtnShowReport_Click"

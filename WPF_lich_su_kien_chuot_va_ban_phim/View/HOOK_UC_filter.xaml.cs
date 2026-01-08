@@ -17,106 +17,348 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
     // ==========================================
     // 1. CLASS DỮ LIỆU CHUNG
     // ==========================================
+
     public class LogEvent
+
     {
-        public string Type { get; set; }
-        public string DecodedAction { get; set; }
-        public long Time { get; set; }
-        public string SourceFile { get; set; }
+
+        // ==========================================
+
+        // 1. CÁC THUỘC TÍNH CƠ BẢN
+
+        // ==========================================
+
+        public string Type { get; set; }            // "KEYBOARD" hoặc "MOUSE"
+
+        public string DecodedAction { get; set; }   // Nội dung hiển thị (VD: "Nhấn A", "Ctrl + C")
+
+        public long Time { get; set; }              // Timestamp
+
+        public string SourceFile { get; set; }      // Tên file nguồn
+
+
+
+        // ==========================================
+
+        // 2. CÁC THUỘC TÍNH MỚI (HỖ TRỢ THUẬT TOÁN COMBO)
+
+        // ==========================================
+
+        public int RawVkCode { get; set; }          // Mã phím gốc (để kiểm tra Ctrl/Alt/Shift)
+
+        public bool IsKeyDown { get; set; }         // Trạng thái: True = Nhấn, False = Nhả
+
+        public bool IsCombo { get; set; } = false;  // Đánh dấu dòng này là tổ hợp phím
+
+
+
+        // ==========================================
+
+        // 3. CÁC THUỘC TÍNH HIỂN THỊ UI (BINDING)
+
+        // ==========================================
 
         public string DisplayTime => Time.ToString();
-        public string Icon => Type == "MOUSE" ? "🖱️" : "⌨️";
-        public Brush IconBgColor => Type == "MOUSE" ? Brushes.AliceBlue : Brushes.Honeydew;
-        public Brush TextColor => Type == "MOUSE" ? Brushes.RoyalBlue : Brushes.SeaGreen;
 
-        // ========== PHƯƠNG THỨC CHO FILE KẾT QUẢ TỪ LOGGER.EXE (ĐƯỜNG DẪN ĐỘC LẬP) ==========
-        public static LogEvent FromProcessedCsv(string line, string sourceFolder = "")
+
+
+        public string Icon => Type == "MOUSE" ? "🖱️" : "⌨️";
+
+
+
+        public Brush IconBgColor => Type == "MOUSE" ? Brushes.AliceBlue : Brushes.Honeydew;
+
+
+
+        public Brush TextColor
+
         {
-            try
+
+            get
+
             {
+
+                // Nếu là Combo -> Màu đỏ nổi bật
+
+                if (IsCombo) return Brushes.Red;
+
+                // Mặc định: Chuột màu xanh dương, Phím màu xanh lá
+
+                return Type == "MOUSE" ? Brushes.RoyalBlue : Brushes.SeaGreen;
+
+            }
+
+        }
+
+
+
+        // ==========================================
+
+        // 4. PHƯƠNG THỨC XỬ LÝ FILE ĐẦU RA (MERGED LOG)
+
+        // ==========================================
+
+        // Format dự kiến từ logger.exe: 
+
+        // Type(1=Key,0=Mouse), ID, MsgID(hex), Time, Vk(hex), Scan(hex), Flags(hex), X, Y, MouseData(hex)
+
+        public static LogEvent FromProcessedCsv(string line, string sourceFolder = "")
+
+        {
+
+            try
+
+            {
+
                 var parts = line.Split(',');
+
                 if (parts.Length < 9 || !long.TryParse(parts[3], out long t)) return null;
 
+
+
                 bool isKey = parts[0].Trim() == "1";
+
+                uint msgId = ParseHex(parts[2]);
+
+
+
+                // Lấy thông tin bổ sung cho thuật toán
+
+                int vkCode = isKey ? (int)ParseHex(parts[4]) : 0;
+
+
+
+                // Xác định trạng thái Nhấn/Nhả dựa trên MsgID
+
+                // 0x100: WM_KEYDOWN, 0x104: WM_SYSKEYDOWN
+
+                // 0x201: WM_LBUTTONDOWN, 0x204: WM_RBUTTONDOWN
+
+                bool isDown = (msgId == 0x100 || msgId == 0x104 || msgId == 0x201 || msgId == 0x204);
+
+
+
                 string actionInfo = "";
 
+
+
                 if (isKey)
-                    actionInfo = DecodeKeyboard(ParseHex(parts[2]), (int)ParseHex(parts[4]));
-                else
+
                 {
-                    actionInfo = DecodeMouse(ParseHex(parts[2]));
-                    if (parts.Length >= 9) actionInfo += $" ({parts[7]}, {parts[8]})";
+
+                    actionInfo = DecodeKeyboard(msgId, vkCode);
+
                 }
+
+                else
+
+                {
+
+                    actionInfo = DecodeMouse(msgId);
+
+                    // Nếu có tọa độ X, Y
+
+                    if (parts.Length >= 9) actionInfo += $" ({parts[7]}, {parts[8]})";
+
+                }
+
+
 
                 return new LogEvent
+
                 {
+
                     Time = t,
+
                     Type = isKey ? "KEYBOARD" : "MOUSE",
+
                     DecodedAction = actionInfo,
-                    SourceFile = string.IsNullOrEmpty(sourceFolder) ? "merged_log.csv" : sourceFolder
+
+                    SourceFile = string.IsNullOrEmpty(sourceFolder) ? "merged_log.csv" : sourceFolder,
+
+
+
+                    // Gán dữ liệu cho thuật toán
+
+                    RawVkCode = vkCode,
+
+                    IsKeyDown = isDown
+
                 };
+
             }
+
             catch { return null; }
+
         }
 
-        // ========== PHƯƠNG THỨC CHO FILE LOG THÔ (ĐƯỜNG DẪN ĐỘC LẬP) ==========
-        public static LogEvent FromRawCsv(string filename, string line)
-        {
-            try
-            {
-                if (line.StartsWith("version") || line.StartsWith("Event")) return null;
-                var parts = line.Split(',');
-                if (parts.Length < 6) return null;
 
-                // Keyboard Raw: 0:Idx, 1:MsgID, 2:Time, 3:Vk, 4:Scan, 5:Flags
-                // Mouse Raw:    0:Idx, 1:MsgID, 2:Time, 3:X,  4:Y,   5:Data
+
+        // ==========================================
+
+        // 5. PHƯƠNG THỨC XỬ LÝ FILE LOG THÔ (RAW)
+
+        // ==========================================
+
+        // Keyboard Raw: Idx, MsgID, Time, Vk, Scan, Flags
+
+        // Mouse Raw:    Idx, MsgID, Time, X, Y, Data
+
+        public static LogEvent FromRawCsv(string filename, string line)
+
+        {
+
+            try
+
+            {
+
+                // Bỏ qua header hoặc dòng rác
+
+                if (line.StartsWith("version", StringComparison.OrdinalIgnoreCase) ||
+
+                    line.StartsWith("Event", StringComparison.OrdinalIgnoreCase)) return null;
+
+
+
+                var parts = line.Split(',');
+
+                if (parts.Length < 4) return null; // Ít nhất phải có MsgID, Time
+
+
 
                 bool isKey = filename.ToLower().Contains("key");
+
                 uint msgId = ParseHex(parts[1]);
+
                 long time = long.Parse(parts[2]);
 
-                var evt = new LogEvent { Time = time, SourceFile = filename };
+
+
+                // Lấy thông tin bổ sung
+
+                // Với file Raw Keyboard, Vk nằm ở index 3
+
+                int vkCode = isKey ? (int)ParseHex(parts[3]) : 0;
+
+                bool isDown = (msgId == 0x100 || msgId == 0x104 || msgId == 0x201 || msgId == 0x204);
+
+
+
+                var evt = new LogEvent
+
+                {
+
+                    Time = time,
+
+                    SourceFile = filename,
+
+                    RawVkCode = vkCode,
+
+                    IsKeyDown = isDown
+
+                };
+
+
 
                 if (isKey)
+
                 {
+
                     evt.Type = "KEYBOARD";
-                    evt.DecodedAction = DecodeKeyboard(msgId, (int)ParseHex(parts[3]));
+
+                    evt.DecodedAction = DecodeKeyboard(msgId, vkCode);
+
                 }
+
                 else
+
                 {
+
                     evt.Type = "MOUSE";
+
                     evt.DecodedAction = DecodeMouse(msgId);
+
                     if (parts.Length >= 5) evt.DecodedAction += $" ({parts[3]}, {parts[4]})";
+
                 }
+
                 return evt;
+
             }
+
             catch { return null; }
+
         }
+
+
+
+        // ==========================================
+
+        // 6. CÁC HÀM GIẢI MÃ (HELPER)
+
+        // ==========================================
 
         private static uint ParseHex(string hex)
+
         {
+
             try { return Convert.ToUInt32(hex.Trim(), 16); }
+
             catch { return 0; }
+
         }
+
+
 
         private static string DecodeMouse(uint id) => id switch
+
         {
+
             0x200 => "Di chuyển",
+
             0x201 => "Click Trái",
+
             0x202 => "Nhả Trái",
+
             0x204 => "Click Phải",
+
             0x205 => "Nhả Phải",
+
+            0x207 => "Click Giữa",
+
+            0x208 => "Nhả Giữa",
+
             0x20A => "Cuộn chuột",
+
             _ => $"Mouse_{id:X}"
+
         };
 
+
+
         private static string DecodeKeyboard(uint id, int vk)
+
         {
+
+            // 0x100/0x104 là Nhấn, còn lại (0x101/0x105) là Nhả
+
             string trangThai = (id == 0x100 || id == 0x104) ? "Nhấn" : "Nhả";
+
+
+
+            // Dùng thư viện WinForms để chuyển mã VK thành tên phím (VD: 65 -> A, 13 -> Enter)
+
             string phim = ((WinForms.Keys)vk).ToString();
+
+
+
             return $"{trangThai} [{phim}]";
+
         }
+
     }
+
+
 
     // ==========================================
     // 2. CLASS GIAO DIỆN CHÍNH
@@ -154,6 +396,12 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
                 cbKeyboard.Unchecked += (s, e) => ApplyFilter();
             }
 
+            if (cbOnlyCombo != null)
+            {
+                cbOnlyCombo.Checked += (s, e) => ApplyFilter();
+                cbOnlyCombo.Unchecked += (s, e) => ApplyFilter();
+            }
+
             this.Loaded += HOOK_UC_filter_Loaded;
         }
 
@@ -169,16 +417,18 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
             DisplayEvents.Clear();
             _allEventsCache.Clear();
 
-            // XỬ LÝ ĐỘC LẬP: Nhật ký sự kiện
             bool logLoaded = await LoadEventLogs();
-
-            // XỬ LÝ ĐỘC LẬP: Báo cáo thống kê
             bool reportLoaded = await LoadStatisticsReport();
 
-            // Hiển thị kết quả
             if (logLoaded)
             {
+                // 1. Sắp xếp theo thời gian
                 _allEventsCache = _allEventsCache.OrderBy(x => x.Time).ToList();
+
+                // 2. --- GỌI HÀM XỬ LÝ COMBO Ở ĐÂY ---
+                PostProcessCombos();
+
+                // 3. Hiển thị ra giao diện
                 ApplyFilter();
             }
 
@@ -373,6 +623,77 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
             });
         }
 
+        private void PostProcessCombos()
+        {
+            // Các mã phím ảo (Virtual Key Codes) của phím bổ trợ
+            const int VK_SHIFT = 16;
+            const int VK_CONTROL = 17;
+            const int VK_MENU = 18; // Alt
+            const int VK_LWIN = 91;
+            const int VK_RWIN = 92;
+
+            bool isCtrl = false;
+            bool isShift = false;
+            bool isAlt = false;
+            bool isWin = false;
+
+            foreach (var evt in _allEventsCache)
+            {
+                if (evt.Type != "KEYBOARD") continue;
+
+                // 1. Cập nhật trạng thái phím bổ trợ
+                if (evt.RawVkCode == VK_SHIFT || evt.RawVkCode == 160 || evt.RawVkCode == 161)
+                {
+                    isShift = evt.IsKeyDown;
+                    continue; // Không hiển thị riêng lẻ Shift nếu muốn gọn
+                }
+                if (evt.RawVkCode == VK_CONTROL || evt.RawVkCode == 162 || evt.RawVkCode == 163)
+                {
+                    isCtrl = evt.IsKeyDown;
+                    continue;
+                }
+                if (evt.RawVkCode == VK_MENU || evt.RawVkCode == 164 || evt.RawVkCode == 165)
+                {
+                    isAlt = evt.IsKeyDown;
+                    continue;
+                }
+                if (evt.RawVkCode == VK_LWIN || evt.RawVkCode == VK_RWIN)
+                {
+                    isWin = evt.IsKeyDown;
+                    continue;
+                }
+
+                // 2. Nếu là phím thường VÀ đang giữ phím bổ trợ -> Đây là Combo
+                if (evt.IsKeyDown && (isCtrl || isAlt || isWin || (isShift && IsSpecialKey(evt.RawVkCode))))
+                {
+                    List<string> comboParts = new List<string>();
+                    if (isCtrl) comboParts.Add("Ctrl");
+                    if (isAlt) comboParts.Add("Alt");
+                    if (isShift) comboParts.Add("Shift");
+                    if (isWin) comboParts.Add("Win");
+
+                    // Lấy tên phím hiện tại (bỏ chữ "Nhấn [...]")
+                    string keyName = ((WinForms.Keys)evt.RawVkCode).ToString();
+                    comboParts.Add(keyName);
+
+                    // Cập nhật lại nội dung hiển thị
+                    evt.DecodedAction = string.Join(" + ", comboParts);
+                    evt.IsCombo = true; // Để đổi màu hiển thị
+                }
+            }
+        }
+
+        // Hàm phụ trợ: Chỉ coi Shift là combo nếu đi cùng các phím chức năng hoặc phím đặc biệt
+        // (Tránh việc Shift + A chỉ là viết hoa chữ A)
+        private bool IsSpecialKey(int vk)
+        {
+            // F1-F12, Delete, Insert, Home, End, Tab...
+            if (vk >= 112 && vk <= 123) return true; // F keys
+            if (vk == 9 || vk == 46 || vk == 45 || vk == 36 || vk == 35) return true;
+            return false;
+            // Nếu muốn bắt tất cả Shift + Chữ cái thì return true luôn.
+        }
+
         // ========== CÁC HÀM UI ==========
         private void ApplyFilter()
         {
@@ -382,10 +703,20 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
             bool m = cbMouse?.IsChecked ?? true;
             bool k = cbKeyboard?.IsChecked ?? true;
 
+            // --- LẤY TRẠNG THÁI NÚT MỚI ---
+            bool onlyCombo = cbOnlyCombo?.IsChecked ?? false;
+
             var result = _allEventsCache.Where(x =>
             {
+                // 1. Lọc theo loại thiết bị
                 if (x.Type == "MOUSE" && !m) return false;
                 if (x.Type == "KEYBOARD" && !k) return false;
+
+                // 2. --- LOGIC LỌC COMBO MỚI ---
+                // Nếu đang tích "Chỉ hiện Combo" mà dòng này KHÔNG phải Combo -> Ẩn luôn
+                if (onlyCombo && !x.IsCombo) return false;
+
+                // 3. Tìm kiếm từ khóa (giữ nguyên)
                 return string.IsNullOrEmpty(kw) ||
                        (x.DecodedAction?.ToLower().Contains(kw) ?? false) ||
                        (x.SourceFile?.ToLower().Contains(kw) ?? false);
@@ -422,5 +753,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
         {
             LoadAllData();
         }
+
+
     }
 }
