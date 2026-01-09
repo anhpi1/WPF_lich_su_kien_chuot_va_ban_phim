@@ -13,11 +13,15 @@
     <None Remove="img\Filterrealtime.png" />
     <None Remove="img\Home.png" />
     <None Remove="img\Setting.png" />
+    <None Remove="server\main.exe" />
     <None Remove="server\resources\replaystart_.keyboard.csv" />
     <None Remove="server\resources\replaystart_mouse.csv" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="server\main.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
     <EmbeddedResource Include="server\resources\replaystart_.keyboard.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
