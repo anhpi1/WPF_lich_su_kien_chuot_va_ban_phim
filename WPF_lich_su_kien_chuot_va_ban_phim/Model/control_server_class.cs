@@ -48,7 +48,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.Model
                 Process.Start(startInfo);
 
                 // Debug: Bỏ comment dòng dưới để biết chắc chắn nó đã chạy ngầm
-                MessageBox.Show("Server đã khởi động ngầm!"); 
+                //MessageBox.Show("Server đã khởi động ngầm!"); 
             }
             catch (Exception ex)
             {
@@ -73,7 +73,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.Model
                 _pipeClient.Connect(5000); // Thử kết nối trong 5 giây (5000ms)
 
                 // Nếu dòng này chạy, tức là hPipe != INVALID_HANDLE_VALUE
-                MessageBox.Show("Đã kết nối thành công đến Server!");
+                //MessageBox.Show("Đã kết nối thành công đến Server!");
 
                 // Lúc này kết nối đã mở, nhưng chưa gửi lệnh gì cả theo yêu cầu của bạn.
                 
