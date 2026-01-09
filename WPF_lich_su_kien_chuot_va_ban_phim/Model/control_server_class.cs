@@ -39,16 +39,16 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.Model
                 startInfo.UseShellExecute = false;
 
                 // 2. Thuộc tính quan trọng nhất để không hiện cửa sổ đen
-                //startInfo.CreateNoWindow = true;
+                startInfo.CreateNoWindow = true;
 
                 // 3. Đặt trạng thái cửa sổ là ẩn (dự phòng)
-                //startInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                startInfo.WindowStyle = ProcessWindowStyle.Hidden;
                 // -----------------------------
 
                 Process.Start(startInfo);
 
                 // Debug: Bỏ comment dòng dưới để biết chắc chắn nó đã chạy ngầm
-                // MessageBox.Show("Server đã khởi động ngầm!"); 
+                MessageBox.Show("Server đã khởi động ngầm!"); 
             }
             catch (Exception ex)
             {
