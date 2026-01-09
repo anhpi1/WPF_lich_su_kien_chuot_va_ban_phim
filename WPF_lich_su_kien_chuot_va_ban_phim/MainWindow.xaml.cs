@@ -114,6 +114,12 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim
             Filter.Foreground = (Brush)new BrushConverter().ConvertFrom("#FF979DA5");
             is_filter_on = false;
 
+
+            FilterRealTime_on.Visibility = Visibility.Hidden;
+            FilterRealTime_off.Visibility = Visibility.Visible;
+            FilterRealTime.Foreground = (Brush)new BrushConverter().ConvertFrom("#FF979DA5");
+            is_filterrealtime_on = false;
+
             // Animate trôi từ dưới lên
             AnimateFromBottom(Screen);
             AnimateFromBottom(Screen_text_header);
