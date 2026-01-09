@@ -743,10 +743,95 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
             System.Windows.MessageBox.Show("Chức năng Replay đang phát triển...", "Thông báo");
         }
 
-        private void BtnShowReport_Click(object sender, RoutedEventArgs e)
+        //private void BtnShowReport_Click(object sender, RoutedEventArgs e)
+        //{
+        //    System.Windows.MessageBox.Show(_cachedReportContent, "BÁO CÁO THỐNG KÊ & COMBO",
+        //        MessageBoxButton.OK, MessageBoxImage.Information);
+        //}
+
+        private async void BtnShowReport_Click(object sender, RoutedEventArgs e)
         {
-            System.Windows.MessageBox.Show(_cachedReportContent, "BÁO CÁO THỐNG KÊ & COMBO",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            try
+            {
+                // 1. Kiểm tra xem có cần chạy lại tool không
+                bool needToRunExe = string.IsNullOrEmpty(_cachedReportContent) ||
+                                    _cachedReportContent.Contains("Chưa có dữ liệu") ||
+                                    _cachedReportContent.Contains("Lỗi");
+
+                if (needToRunExe)
+                {
+                    if (lblCount != null) lblCount.Text = "Đang chạy Logger.exe...";
+
+                    bool success = await Task.Run(() =>
+                    {
+                        try
+                        {
+                            string exePath = Path.Combine(_serverFolder, EXE_FILENAME);
+
+                            // DEBUG: Kiểm tra file exe có tồn tại không
+                            if (!File.Exists(exePath))
+                            {
+                                Dispatcher.Invoke(() => System.Windows.MessageBox.Show($"Không tìm thấy file chạy tại:\n{exePath}", "Lỗi Đường Dẫn"));
+                                return false;
+                            }
+
+                            // Cấu hình chạy Process
+                            ProcessStartInfo psi = new ProcessStartInfo
+                            {
+                                FileName = exePath,
+                                WorkingDirectory = _serverFolder, // Chạy tại thư mục server
+                                CreateNoWindow = true,
+                                UseShellExecute = false
+                            };
+
+                            using (var process = Process.Start(psi))
+                            {
+                                process?.WaitForExit(10000); // Tăng thời gian chờ lên 10s
+                            }
+
+                            // 2. TÌM KIẾM FILE BÁO CÁO (QUÉT TOÀN BỘ THƯ MỤC CON)
+                            // Code cũ chỉ tìm ở gốc, code này tìm cả trong folder con như "processed"
+                            string[] reportFiles = Directory.GetFiles(_serverFolder, "Bao_cao_thong_ke.txt", SearchOption.AllDirectories);
+
+                            if (reportFiles.Length > 0)
+                            {
+                                // Lấy file mới nhất nếu có nhiều file
+                                string bestFile = reportFiles.OrderByDescending(f => new FileInfo(f).LastWriteTime).First();
+                                _cachedReportContent = File.ReadAllText(bestFile, System.Text.Encoding.UTF8);
+                                return true;
+                            }
+
+                            return false;
+                        }
+                        catch (Exception ex)
+                        {
+                            Dispatcher.Invoke(() => System.Windows.MessageBox.Show("Lỗi khi chạy tool: " + ex.Message));
+                            return false;
+                        }
+                    });
+
+                    if (!success)
+                    {
+                        System.Windows.MessageBox.Show("Tool đã chạy nhưng không sinh ra file báo cáo.\nHãy kiểm tra lại thư mục 'server/log'.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        if (lblCount != null) lblCount.Text = "Lỗi tạo báo cáo.";
+                        return;
+                    }
+
+                    if (lblCount != null) lblCount.Text = "Đã cập nhật báo cáo.";
+                }
+
+                // 3. Hiển thị báo cáo
+                System.Windows.MessageBox.Show(
+                    _cachedReportContent,
+                    "BÁO CÁO THỐNG KÊ & COMBO",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information
+                );
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show("Lỗi UI: " + ex.Message);
+            }
         }
 
         private void BtnRefresh_Click(object sender, RoutedEventArgs e)
