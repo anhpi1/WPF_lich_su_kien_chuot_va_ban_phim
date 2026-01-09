@@ -12,7 +12,7 @@ using System.Windows;
 
 namespace WPF_lich_su_kien_chuot_va_ban_phim.Model
 {
-    internal class control_server_class
+    public class control_server_class
     {
         public NamedPipeClientStream _pipeClient;
         

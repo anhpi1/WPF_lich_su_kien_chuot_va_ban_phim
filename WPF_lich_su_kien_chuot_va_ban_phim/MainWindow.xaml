@@ -119,6 +119,8 @@
                         <RowDefinition></RowDefinition>
                         <RowDefinition></RowDefinition>
                         <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
                     </Grid.RowDefinitions>
 
                     <Grid Grid.Row="0">
@@ -309,7 +311,7 @@
                         </StackPanel>
                         <Button Style="{StaticResource InvisibleButton}" Background="Transparent" Height="60" Width="300" Margin="20,10,0,0" BorderBrush="Transparent" Click="Button_Click_2" MouseLeave="Filter_mouse_leaver" MouseEnter="Filter_mouse_enter"/>
                     </Grid>
-                    <Grid Grid.Row="2">
+                    <Grid Grid.Row="3">
                         <Grid  x:Name="Setting_on" Visibility="Hidden">
                             <Path Fill="#ECF0F3" HorizontalAlignment="Center">
                                 <Path.Data>
@@ -403,9 +405,196 @@
                         </StackPanel>
                         <Button Style="{StaticResource InvisibleButton}" Background="Transparent" Height="60" Width="300" Margin="20,10,0,0" BorderBrush="Transparent" Click="Button_Click_1" MouseEnter="Setting_mouse_enter" MouseLeave="Setting_mouse_leaver"></Button>
                     </Grid>
+                    <Grid Grid.Row="2">
+                        <Grid  x:Name="FilterRealTime_on" Visibility="Hidden">
+                            <Path Fill="#ECF0F3" HorizontalAlignment="Center">
+                                <Path.Data>
+
+                                    <CombinedGeometry GeometryCombineMode="Exclude">
+                                        <!-- HÌNH NGOÀI -->
+                                        <CombinedGeometry.Geometry1>
+                                            <RectangleGeometry Rect="20,20,320,80" />
+                                        </CombinedGeometry.Geometry1>
+                                    </CombinedGeometry>
+
+                                </Path.Data>
+
+                            </Path>
+                            <Path Fill="#D1D9E6" HorizontalAlignment="Center">
+                                <Path.Data>
+
+                                    <CombinedGeometry GeometryCombineMode="Exclude">
+                                        <!-- HÌNH NGOÀI -->
+                                        <CombinedGeometry.Geometry1>
+                                            <RectangleGeometry Rect="20,20,320,80" />
+                                        </CombinedGeometry.Geometry1>
+                                        <!-- LỖ TRONG -->
+                                        <CombinedGeometry.Geometry2>
+                                            <RectangleGeometry Rect="30,30,300,60" RadiusX="20" RadiusY="20"/>
+                                        </CombinedGeometry.Geometry2>
+
+                                    </CombinedGeometry>
+
+                                </Path.Data>
+                                <!-- BÓNG ĐƠN -->
+                                <Path.Effect>
+                                    <DropShadowEffect Color="Black" BlurRadius="10" ShadowDepth="5" Direction="-45" Opacity="0.35"/>
+                                </Path.Effect>
+                            </Path>
+                            <Path Fill="#D1D9E6" HorizontalAlignment="Center">
+                                <Path.Data>
+
+                                    <CombinedGeometry GeometryCombineMode="Exclude">
+                                        <!-- HÌNH NGOÀI -->
+                                        <CombinedGeometry.Geometry1>
+                                            <RectangleGeometry Rect="20,20,320,80" />
+                                        </CombinedGeometry.Geometry1>
+                                        <!-- LỖ TRONG -->
+                                        <CombinedGeometry.Geometry2>
+                                            <RectangleGeometry Rect="30,30,300,60" RadiusX="20" RadiusY="20"/>
+                                        </CombinedGeometry.Geometry2>
+
+                                    </CombinedGeometry>
+
+                                </Path.Data>
+                                <!-- BÓNG ĐƠN -->
+                                <Path.Effect>
+                                    <DropShadowEffect Color="White" BlurRadius="10" ShadowDepth="5" Direction="135" Opacity="1"/>
+                                </Path.Effect>
+                            </Path>
+                            <Path Fill="#D1D9E6" HorizontalAlignment="Center">
+                                <Path.Data>
+
+                                    <CombinedGeometry GeometryCombineMode="Exclude">
+                                        <!-- HÌNH NGOÀI -->
+                                        <CombinedGeometry.Geometry1>
+                                            <RectangleGeometry Rect="20,10,360,100" />
+                                        </CombinedGeometry.Geometry1>
+                                        <!-- LỖ TRONG -->
+                                        <CombinedGeometry.Geometry2>
+                                            <RectangleGeometry Rect="40,20,320,80"/>
+                                        </CombinedGeometry.Geometry2>
+
+                                    </CombinedGeometry>
+
+                                </Path.Data>
+
+                            </Path>
+                        </Grid>
+                        <Grid Margin="20,10,0,0"  x:Name="FilterRealTime_off" Visibility="Visible">
+                            <Border Background="#ECF0F3" CornerRadius="20" Width="300" Height="60">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#FFFFFF" BlurRadius="15" ShadowDepth="5" Direction="135" Opacity="1"/>
+                                </Border.Effect>
+                            </Border>
+                            <Border Background="#ECF0F3" CornerRadius="20" Width="300" Height="60">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="Black" BlurRadius="12" ShadowDepth="7" Direction="-45" Opacity="0.3"/>
+                                </Border.Effect>
+                            </Border>
+                        </Grid >
+                        <StackPanel >
+                            <TextBlock Foreground="Transparent" FontSize="30"></TextBlock>
+                            <TextBlock x:Name="FilterRealTime" Foreground="#FF979DA5" FontSize="30" Margin="20,0,0,0" HorizontalAlignment="Center">Filter Real Time</TextBlock>
+                        </StackPanel>
+                        <Button Style="{StaticResource InvisibleButton}" Background="Transparent" Height="60" Width="300" Margin="20,10,0,0" BorderBrush="Transparent" Click="Button_Click_4" MouseEnter="Filterrealtime_mouse_enter" MouseLeave="Filterrealtime_mouse_leaver"></Button>
+                    </Grid>
+                    <Grid Grid.Row="4">
+                        <Grid  x:Name="Exit_on" Visibility="Hidden">
+                            <Path Fill="#ECF0F3" HorizontalAlignment="Center">
+                                <Path.Data>
+
+                                    <CombinedGeometry GeometryCombineMode="Exclude">
+                                        <!-- HÌNH NGOÀI -->
+                                        <CombinedGeometry.Geometry1>
+                                            <RectangleGeometry Rect="20,20,320,80" />
+                                        </CombinedGeometry.Geometry1>
+                                    </CombinedGeometry>
+
+                                </Path.Data>
+
+                            </Path>
+                            <Path Fill="#D1D9E6" HorizontalAlignment="Center">
+                                <Path.Data>
+
+                                    <CombinedGeometry GeometryCombineMode="Exclude">
+                                        <!-- HÌNH NGOÀI -->
+                                        <CombinedGeometry.Geometry1>
+                                            <RectangleGeometry Rect="20,20,320,80" />
+                                        </CombinedGeometry.Geometry1>
+                                        <!-- LỖ TRONG -->
+                                        <CombinedGeometry.Geometry2>
+                                            <RectangleGeometry Rect="30,30,300,60" RadiusX="20" RadiusY="20"/>
+                                        </CombinedGeometry.Geometry2>
+
+                                    </CombinedGeometry>
+
+                                </Path.Data>
+                                <!-- BÓNG ĐƠN -->
+                                <Path.Effect>
+                                    <DropShadowEffect Color="Black" BlurRadius="10" ShadowDepth="5" Direction="-45" Opacity="0.35"/>
+                                </Path.Effect>
+                            </Path>
+                            <Path Fill="#D1D9E6" HorizontalAlignment="Center">
+                                <Path.Data>
+
+                                    <CombinedGeometry GeometryCombineMode="Exclude">
+                                        <!-- HÌNH NGOÀI -->
+                                        <CombinedGeometry.Geometry1>
+                                            <RectangleGeometry Rect="20,20,320,80" />
+                                        </CombinedGeometry.Geometry1>
+                                        <!-- LỖ TRONG -->
+                                        <CombinedGeometry.Geometry2>
+                                            <RectangleGeometry Rect="30,30,300,60" RadiusX="20" RadiusY="20"/>
+                                        </CombinedGeometry.Geometry2>
+
+                                    </CombinedGeometry>
+
+                                </Path.Data>
+                                <!-- BÓNG ĐƠN -->
+                                <Path.Effect>
+                                    <DropShadowEffect Color="White" BlurRadius="10" ShadowDepth="5" Direction="135" Opacity="1"/>
+                                </Path.Effect>
+                            </Path>
+                            <Path Fill="#D1D9E6" HorizontalAlignment="Center">
+                                <Path.Data>
+
+                                    <CombinedGeometry GeometryCombineMode="Exclude">
+                                        <!-- HÌNH NGOÀI -->
+                                        <CombinedGeometry.Geometry1>
+                                            <RectangleGeometry Rect="20,10,360,100" />
+                                        </CombinedGeometry.Geometry1>
+                                        <!-- LỖ TRONG -->
+                                        <CombinedGeometry.Geometry2>
+                                            <RectangleGeometry Rect="40,20,320,80"/>
+                                        </CombinedGeometry.Geometry2>
+
+                                    </CombinedGeometry>
+
+                                </Path.Data>
+
+                            </Path>
+                        </Grid>
+                        <Grid Margin="20,10,0,0"  x:Name="Exit_off" Visibility="Visible">
+                            <Border Background="#ECF0F3" CornerRadius="20" Width="300" Height="60">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#FFFFFF" BlurRadius="15" ShadowDepth="5" Direction="135" Opacity="1"/>
+                                </Border.Effect>
+                            </Border>
+                            <Border Background="#ECF0F3" CornerRadius="20" Width="300" Height="60">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="Black" BlurRadius="12" ShadowDepth="7" Direction="-45" Opacity="0.3"/>
+                                </Border.Effect>
+                            </Border>
+                        </Grid >
+                        <StackPanel >
+                            <TextBlock Foreground="Transparent" FontSize="30"></TextBlock>
+                            <TextBlock x:Name="Exit" Foreground="#FF979DA5" FontSize="30" Margin="20,0,0,0" HorizontalAlignment="Center">Exit</TextBlock>
+                        </StackPanel>
+                        <Button Style="{StaticResource InvisibleButton}" Background="Transparent" Height="60" Width="300" Margin="20,10,0,0" BorderBrush="Transparent" Click="Button_Click_3" MouseEnter="Exit_mouse_enter" MouseLeave="Exit_mouse_leaver"></Button>
+                    </Grid>
 
 
-                    
 
 
 

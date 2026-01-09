@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,6 +15,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using WPF_lich_su_kien_chuot_va_ban_phim.Model;
 
 namespace WPF_lich_su_kien_chuot_va_ban_phim.View
 {
@@ -20,10 +24,22 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
     /// </summary>
     public partial class HOOK_UC_filter : UserControl
     {
+        private control_server_class controlServer;
         private double ScaleFactor => SystemParameters.PrimaryScreenHeight / 1080.0;
-        public HOOK_UC_filter()
+        private ICollectionView ActionListView;
+        public HOOK_UC_filter(control_server_class tempSever)
         {
             InitializeComponent();
+
+            ActionList = new ObservableCollection<ActionItem>();
+            DataContext = this;
+
+            // Tạo CollectionView từ ActionList
+            ActionListView = CollectionViewSource.GetDefaultView(ActionList);
+            ActionListView.Filter = ActionListFilter;
+
+            controlServer = tempSever;
+
             // Scale toàn bộ UI sau khi load
             this.Loaded += HOOK_UC_filter_Loaded;
         }
@@ -59,6 +75,156 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
                 }
             }
         }
+
+        public class ActionItem
+        {
+            public string Icon { get; set; }
+            public string Title { get; set; }
+            public string Info { get; set; }
+        }
+
+        public ObservableCollection<ActionItem> ActionList { get; set; }
+
+        public void AddActionItem(string icon, string title, string info)
+        {
+            ActionList.Add(new ActionItem
+            {
+                Icon = icon,
+                Title = title,
+                Info = info
+            });
+        }
+
+        private string GetIconFromEventName(string eventName)
+        {
+            string name = eventName.ToLower();
+
+            if (name.Contains("di_chuyen"))
+                return "⚡";
+
+            if (name.Contains("chuot"))
+                return "🖱️";
+
+            return "⌨️";
+        }
+
+        public void LoadProcessedEvents(string folderPath)
+        {
+            if (!Directory.Exists(folderPath))
+                return;
+
+            string[] files = Directory.GetFiles(folderPath, "*.csv");
+
+            int i = 0;
+            while (i < files.Length)
+            {
+                // Replace all usages of 'Path' with 'System.IO.Path' to resolve ambiguity
+
+                string fileName = System.IO.Path.GetFileNameWithoutExtension(files[i]);
+                // VD: 00001_Di_chuyen_chuot_mouse
+
+                string[] parts = fileName.Split('_', 2);
+                if (parts.Length < 2)
+                {
+                    i++;
+                    continue;
+                }
+
+                string index = parts[0];          // 00001
+                string eventName = parts[1];      // Di_chuyen_chuot_mouse
+
+                string icon = GetIconFromEventName(eventName);
+
+                AddActionItem(
+                    icon,
+                    $"{index}_[{eventName}]",
+                    "File CSV • Loaded"
+                );
+
+                i++;
+            }
+        }
+
+        public void ShowReportMessageBox(string filePath)
+        {
+            try
+            {
+                if (!File.Exists(filePath))
+                {
+                    MessageBox.Show(
+                        "Không tìm thấy file báo cáo!",
+                        "Lỗi",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                    return;
+                }
+
+                string content = File.ReadAllText(filePath, Encoding.UTF8);
+
+                MessageBox.Show(
+                    content,
+                    "Báo cáo thống kê",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    ex.Message,
+                    "Lỗi đọc file",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+
+        private async void Button_Click(object sender, RoutedEventArgs e)
+        {
+            controlServer.SendCommand($"Sap_xep");
+            MessageBox.Show("Đã gửi lệnh sắp xếp đợi vài giây để sever xử lý");
+            await Task.Delay(2000); // Chờ 2 giây để server xử lý
+            controlServer.SendCommand($"Tach_va_dich");
+            MessageBox.Show("Đã gửi lệnh xử lý kê tiếp đợi vài giây để sever xử lý");
+            await Task.Delay(2000); // Chờ 2 giây để server xử lý
+
+            LoadProcessedEvents("server/processed_events");
+        }
+
+        private async void Button_Click_1(object sender, RoutedEventArgs e)
+        {
+            controlServer.SendCommand($"Phan_tich");
+            MessageBox.Show("Đã gửi lệnh thống kê đợi vài giây để sever xử lý");
+            await Task.Delay(2000); // Chờ 2 giây để server xử lý
+            ShowReportMessageBox("server/Bao_cao_thong_ke.txt");
+        }
+        private bool ActionListFilter(object obj)
+        {
+            if (obj is not ActionItem item)
+                return false;
+
+            bool showKeyboard = KeyboardCheckBox.IsChecked == true;
+            bool showMouse = MouseCheckBox.IsChecked == true;
+
+            string lowerTitle = item.Title.ToLower();
+
+            // Nếu chứa "nhan" -> bàn phím
+            if (lowerTitle.Contains("nhan") && showKeyboard)
+                return true;
+
+            // Nếu chứa "chuot" -> chuột
+            if (lowerTitle.Contains("chuot") && showMouse)
+                return true;
+
+            return false; // ẩn các item không được check
+        }
+
+        private void FilterCheckBox_Changed(object sender, RoutedEventArgs e)
+        {
+            if (ActionListView == null)
+                return;
+            ActionListView.Refresh();
+        }
+
     }
 
 }

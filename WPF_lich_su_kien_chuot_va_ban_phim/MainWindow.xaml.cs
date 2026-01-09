@@ -11,27 +11,33 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim
 {
     public partial class MainWindow : Window
     {
+        private control_server_class controlServer;
         // Độ phân giải gốc bạn thiết kế
         private HOOK__UC_main HOOK_UC_Main;
         private HOOK_UC_filter HOOK_UC_Filter;
+        private HOOK_UC_filterrealtime HOOK_UC_FilterRealTime;
         private const double DESIGN_WIDTH = 1920.0;
         private const double DESIGN_HEIGHT = 1080.0;
         private bool is_home_on = true;
         private bool is_setting_on = false;
         private bool is_filter_on = false;
+        private bool is_filterrealtime_on = false;
 
 
         public MainWindow()
         {
             InitializeComponent();
-            
-            
-         
+
+            controlServer = new control_server_class();
+            controlServer.RunServer();
+            controlServer.ConnectToPipeServer();
+
             // Gắn sự kiện resize
             SizeChanged += MainWindow_SizeChanged;
             Loaded += MainWindow_Loaded;
-            HOOK_UC_Main = new HOOK__UC_main();
-            HOOK_UC_Filter = new HOOK_UC_filter();
+            HOOK_UC_Main = new HOOK__UC_main(controlServer);
+            HOOK_UC_Filter = new HOOK_UC_filter(controlServer);
+            HOOK_UC_FilterRealTime = new HOOK_UC_filterrealtime(controlServer);
             myctrl.Content = HOOK_UC_Main;
 
         }
@@ -134,6 +140,11 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim
             Filter.Foreground = (Brush)new BrushConverter().ConvertFrom("#FF979DA5");
             is_filter_on = false;
 
+            FilterRealTime_on.Visibility = Visibility.Hidden;
+            FilterRealTime_off.Visibility = Visibility.Visible;
+            FilterRealTime.Foreground = (Brush)new BrushConverter().ConvertFrom("#FF979DA5");
+            is_filterrealtime_on = false;
+
             // Animate trôi từ dưới lên
             AnimateFromBottom(Screen);
             AnimateFromBottom(Screen_text_header);
@@ -185,6 +196,11 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim
             Setting.Foreground = (Brush)new BrushConverter().ConvertFrom("#FF979DA5");
             is_setting_on = false;
 
+            FilterRealTime_on.Visibility = Visibility.Hidden;
+            FilterRealTime_off.Visibility = Visibility.Visible;
+            FilterRealTime.Foreground = (Brush)new BrushConverter().ConvertFrom("#FF979DA5");
+            is_filterrealtime_on = false;
+
             // Animate trôi từ dưới lên
             AnimateFromBottom(Screen);
             AnimateFromBottom(Screen_text_header);
@@ -200,6 +216,76 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim
         {
             if (is_filter_on) Filter.Foreground = (Brush)new BrushConverter().ConvertFrom("#3b82f6");
             else Filter.Foreground = (Brush)new BrushConverter().ConvertFrom("#FF979DA5");
+        }
+
+        private async void Button_Click_3(object sender, RoutedEventArgs e)
+        {
+            Exit_on.Visibility = Visibility.Visible;
+            Exit_off.Visibility = Visibility.Hidden;
+            Exit.Foreground = (Brush)new BrushConverter().ConvertFrom("#3b82f6");
+      
+            controlServer.SendCommand("STOP");
+            await Task.Delay(200);
+
+            Exit_on.Visibility = Visibility.Hidden;
+            Exit_off.Visibility = Visibility.Visible;
+            Exit.Foreground = (Brush)new BrushConverter().ConvertFrom("#FF979DA5");
+            this.Close();
+
+        }
+
+        private void Exit_mouse_enter(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            Exit.Foreground = (Brush)new BrushConverter().ConvertFrom("#000000");
+        }
+
+        private void Exit_mouse_leaver(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            Exit.Foreground = (Brush)new BrushConverter().ConvertFrom("#FF979DA5");
+        }
+
+        private void Button_Click_4(object sender, RoutedEventArgs e)
+        {
+            FilterRealTime_on.Visibility = Visibility.Visible;
+            FilterRealTime_off.Visibility = Visibility.Hidden;
+
+            FilterRealTime.Foreground = (Brush)new BrushConverter().ConvertFrom("#3b82f6");
+            Screen.Source = new BitmapImage(new Uri("img/Filterrealtime.png", UriKind.Relative));
+            Screen_text_header.Text = "Filter Real Time";
+            Screen_text_title.Text = "Lọc theo thời gian thực";
+            is_filterrealtime_on = true;
+            myctrl.Content = HOOK_UC_FilterRealTime;
+
+            Filter_on.Visibility = Visibility.Hidden;
+            Filter_off.Visibility = Visibility.Visible;
+            Filter.Foreground = (Brush)new BrushConverter().ConvertFrom("#FF979DA5");
+
+            Home_on.Visibility = Visibility.Hidden;
+            Home_off.Visibility = Visibility.Visible;
+            Home.Foreground = (Brush)new BrushConverter().ConvertFrom("#FF979DA5");
+            is_home_on = false;
+
+            Setting_on.Visibility = Visibility.Hidden;
+            Setting_off.Visibility = Visibility.Visible;
+            Setting.Foreground = (Brush)new BrushConverter().ConvertFrom("#FF979DA5");
+            is_setting_on = false;
+
+            // Animate trôi từ dưới lên
+            AnimateFromBottom(Screen);
+            AnimateFromBottom(Screen_text_header);
+            AnimateFromBottom(Screen_text_title);
+
+        }
+
+        private void Filterrealtime_mouse_enter(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            FilterRealTime.Foreground = (Brush)new BrushConverter().ConvertFrom("#000000");
+        }
+
+        private void Filterrealtime_mouse_leaver(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            if (is_filterrealtime_on) FilterRealTime.Foreground = (Brush)new BrushConverter().ConvertFrom("#3b82f6");
+            else FilterRealTime.Foreground = (Brush)new BrushConverter().ConvertFrom("#FF979DA5");
         }
     }
 }

@@ -32,12 +32,10 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
         private bool togger_record = false;
         private bool togger_replay = false;
 
-        public HOOK__UC_main()
+        public HOOK__UC_main(control_server_class tempSever)
         {
             InitializeComponent();
-            controlServer = new control_server_class();
-            controlServer.RunServer();
-            controlServer.ConnectToPipeServer();
+            controlServer = tempSever;
             // Scale toàn bộ UI sau khi load
             this.Loaded += HOOK__UC_main_Loaded;
             LoadFilePairs(@"server\log");
