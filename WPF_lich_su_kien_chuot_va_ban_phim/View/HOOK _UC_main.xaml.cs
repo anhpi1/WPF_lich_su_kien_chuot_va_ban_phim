@@ -291,73 +291,97 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
 
         private async void Button_Click_1(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                _replayCts?.Cancel();
-                _replayCts = new CancellationTokenSource();
 
-                string selected = FilePairListBox.SelectedItem as string ?? "";
-                selected = selected.Trim();
+            Replay_on.Visibility = Visibility.Visible;
+            Replay_off.Visibility = Visibility.Hidden;
+            Replay.Foreground = (System.Windows.Media.Brush)new BrushConverter().ConvertFrom("#3b82f6");
 
-                if (string.IsNullOrWhiteSpace(selected))
-                {
-                    ReplayKeyboardText.Text = "Bạn chưa chọn cặp file log trong danh sách.";
-                    return;
-                }
-
-                // Chuỗi dạng: "log\\mouse_log0.csv log\\keyboard_log0.csv"
-                var parts = selected.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-
-                // Lấy legacy path từ item
-                string keyboardLegacy = parts.FirstOrDefault(p => p.ToLower().Contains("keyboard")) ?? "";
-                string mouseLegacy = parts.FirstOrDefault(p => p.ToLower().Contains("mouse")) ?? "";
-
-                if (string.IsNullOrWhiteSpace(keyboardLegacy))
-                {
-                    ReplayKeyboardText.Text = "Không tìm thấy đường dẫn keyboard trong item đã chọn.";
-                    return;
-                }
-
-                // ✅ Map sang đường dẫn thật
-                string keyboardPath = MapLegacyLogPath(keyboardLegacy);
-                string mousePath = MapLegacyLogPath(mouseLegacy);
+            string mode;
+            if (Mode0.IsChecked == true) mode = "0";
+            else if (Mode1.IsChecked == true) mode = "1";
+            else mode = "2";
 
 
-                // Debug để bạn nhìn thấy map đúng chưa
-                ReplayKeyboardText.Text =
-                    $"Legacy keyboard: {keyboardLegacy}\n" +
-                    $"Mapped keyboard:  {keyboardPath}\n";
-                ReplayKeyboardText.Text =
-                $"Legacy mouse: {mouseLegacy}\nMapped mouse: {mousePath}\n" +
-                $"Legacy keyboard: {keyboardLegacy}\nMapped keyboard: {keyboardPath}\n";
+            controlServer.SendCommand($"REPLAY {Selected_file_replay} {mode}");
+            await Task.Delay(200);
+
+            Replay_on.Visibility = Visibility.Hidden;
 
 
-                if (Mode1.IsChecked == true) // Keyboard
-                {
-                    await ReplayKeyboardAndShowAsync(keyboardPath, _replayCts.Token);
-                }
-                else if (Mode2.IsChecked == true) // Combine
-                {
-                    _ = ReplayKeyboardAndShowAsync(keyboardPath, _replayCts.Token);
-                    _ = ReplayMouseAndShowAsync(mousePath, _replayCts.Token);
-
-                }
-                else
-                {
-
-                    _ = ReplayMouseAndShowAsync(mousePath, _replayCts.Token);
-                    ReplayKeyboardText.Text = "Mouse mode: không hiển thị keyboard.";
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                Dispatcher.Invoke(() => ReplayKeyboardText.AppendText("----- CANCELED -----\n"));
-            }
-            catch (Exception ex)
-            {
-                ReplayKeyboardText.Text = "Lỗi REPLAY: " + ex.Message;
-            }
         }
+
+
+
+
+        //private async void Button_Click_1(object sender, RoutedEventArgs e)
+        //{
+        //    try
+        //    {
+        //        _replayCts?.Cancel();
+        //        _replayCts = new CancellationTokenSource();
+
+        //        string selected = FilePairListBox.SelectedItem as string ?? "";
+        //        selected = selected.Trim();
+
+        //        if (string.IsNullOrWhiteSpace(selected))
+        //        {
+        //            ReplayKeyboardText.Text = "Bạn chưa chọn cặp file log trong danh sách.";
+        //            return;
+        //        }
+
+        //        // Chuỗi dạng: "log\\mouse_log0.csv log\\keyboard_log0.csv"
+        //        var parts = selected.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+        //        // Lấy legacy path từ item
+        //        string keyboardLegacy = parts.FirstOrDefault(p => p.ToLower().Contains("keyboard")) ?? "";
+        //        string mouseLegacy = parts.FirstOrDefault(p => p.ToLower().Contains("mouse")) ?? "";
+
+        //        if (string.IsNullOrWhiteSpace(keyboardLegacy))
+        //        {
+        //            ReplayKeyboardText.Text = "Không tìm thấy đường dẫn keyboard trong item đã chọn.";
+        //            return;
+        //        }
+
+        //        // ✅ Map sang đường dẫn thật
+        //        string keyboardPath = MapLegacyLogPath(keyboardLegacy);
+        //        string mousePath = MapLegacyLogPath(mouseLegacy);
+
+
+        //        // Debug để bạn nhìn thấy map đúng chưa
+        //        ReplayKeyboardText.Text =
+        //            $"Legacy keyboard: {keyboardLegacy}\n" +
+        //            $"Mapped keyboard:  {keyboardPath}\n";
+        //        ReplayKeyboardText.Text =
+        //        $"Legacy mouse: {mouseLegacy}\nMapped mouse: {mousePath}\n" +
+        //        $"Legacy keyboard: {keyboardLegacy}\nMapped keyboard: {keyboardPath}\n";
+
+
+        //        if (Mode1.IsChecked == true) // Keyboard
+        //        {
+        //            await ReplayKeyboardAndShowAsync(keyboardPath, _replayCts.Token);
+        //        }
+        //        else if (Mode2.IsChecked == true) // Combine
+        //        {
+        //            _ = ReplayKeyboardAndShowAsync(keyboardPath, _replayCts.Token);
+        //            _ = ReplayMouseAndShowAsync(mousePath, _replayCts.Token);
+
+        //        }
+        //        else
+        //        {
+
+        //            _ = ReplayMouseAndShowAsync(mousePath, _replayCts.Token);
+        //            ReplayKeyboardText.Text = "Mouse mode: không hiển thị keyboard.";
+        //        }
+        //    }
+        //    catch (OperationCanceledException)
+        //    {
+        //        Dispatcher.Invoke(() => ReplayKeyboardText.AppendText("----- CANCELED -----\n"));
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        ReplayKeyboardText.Text = "Lỗi REPLAY: " + ex.Message;
+        //    }
+        //}
 
 
 
