@@ -144,7 +144,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
             if (Mode0.IsChecked == true) mode = "0";
             else if (Mode1.IsChecked == true) mode = "1";
             else mode = "2";
-
+            if(Mode1.IsChecked == true)MessageBox.Show("sau khi phần mềm mở CMD đợi một lúc để xem phát lại phím");
 
             controlServer.SendCommand($"REPLAY {Selected_file_replay} {mode}");
             await Task.Delay(200);
