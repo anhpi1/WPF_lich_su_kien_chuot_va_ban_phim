@@ -38,8 +38,8 @@
                 <StackPanel Orientation="Vertical" Margin="10">
 
                     <!-- MOUSE -->
-                    <CheckBox x:Name="cbMouseClick" Content="Mouse Click" IsChecked="True" Checked="FilterChanged" />
-                    <CheckBox x:Name="cbMouseDrag" Content="Mouse Drag / Drop" IsChecked="True" Checked="FilterChanged" />
+                    <CheckBox x:Name="cbMouseClick" Content="Mouse Click" IsChecked="True" Checked="FilterChanged" Unchecked="LogTimer_Tick"/>
+                    <CheckBox x:Name="cbMouseDrag" Content="Mouse Drag / Drop" IsChecked="True" Checked="FilterChanged" Unchecked="LogTimer_Tick"/>
                     <CheckBox x:Name="cbMouseHold" Content="Mouse Hold" IsChecked="True" Checked="FilterChanged" Unchecked="LogTimer_Tick"/>
                     <CheckBox x:Name="cbMouseMove" Content="Mouse Move" IsChecked="True" Checked="FilterChanged" Unchecked="FilterChanged"/>
                     <CheckBox x:Name="cbMouseWheel" Content="Mouse Wheel" IsChecked="True" Checked="FilterChanged" Unchecked="FilterChanged"/>
