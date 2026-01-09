@@ -114,7 +114,66 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.Model
             }
         }
 
-        
+        public void DeleteFiles(string path, int mode)
+        {
+            //mode = 1: xóa file
+            //mode = 2: xóa tất cả file trong folder, không xóa folder
+            if (mode == 1)
+            {
+                // Xóa file
+                if (File.Exists(path))
+                {
+                    try
+                    {
+                        File.Delete(path);
+                        Console.WriteLine($"Đã xóa file: {path}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Lỗi khi xóa file: {ex.Message}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"File không tồn tại: {path}");
+                }
+            }
+            else if (mode == 2)
+            {
+                // Xóa tất cả file trong folder, không xóa folder
+                if (Directory.Exists(path))
+                {
+                    try
+                    {
+                        string[] files = Directory.GetFiles(path);
+                        foreach (var file in files)
+                        {
+                            try
+                            {
+                                File.Delete(file);
+                                Console.WriteLine($"Đã xóa file: {file}");
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"Lỗi khi xóa file {file}: {ex.Message}");
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Lỗi khi xóa file trong folder: {ex.Message}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"Folder không tồn tại: {path}");
+                }
+            }
+            else
+            {
+                Console.WriteLine("Mode không hợp lệ. Dùng 1 = xóa file, 2 = xóa file trong folder");
+            }
+        }
     }
 }
 

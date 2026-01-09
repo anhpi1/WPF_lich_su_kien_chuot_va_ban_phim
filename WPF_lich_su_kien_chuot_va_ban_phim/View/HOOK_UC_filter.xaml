@@ -37,6 +37,13 @@
                     <CheckBox x:Name="MouseCheckBox" Content="Chuột" IsChecked="True" Checked="FilterCheckBox_Changed" Unchecked="FilterCheckBox_Changed"/>
                 </StackPanel>
 
+                <Button Content="Xử lý dữ liệu" Margin="0,30,0,0" Height="40" Background="#3B82F6" Foreground="White" FontWeight="Bold" BorderThickness="0" Click="Button_Click_2" >
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="8"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
 
                 <Button Content="Áp dụng lọc" Margin="0,30,0,0" Height="40" Background="#3B82F6" Foreground="White" FontWeight="Bold" BorderThickness="0" Click="Button_Click">
                     <Button.Resources>
@@ -45,7 +52,15 @@
                         </Style>
                     </Button.Resources>
                 </Button>
+                
                 <Button Content="Xem thống kê" Margin="0,30,0,0" Height="40" Background="#3B82F6" Foreground="White" FontWeight="Bold" BorderThickness="0" Click="Button_Click_1">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="8"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
+                <Button Content="Xóa dữ liệu" Margin="0,30,0,0" Height="40" Background="#3B82F6" Foreground="White" FontWeight="Bold" BorderThickness="0" Click="Button_Click_3" >
                     <Button.Resources>
                         <Style TargetType="Border">
                             <Setter Property="CornerRadius" Value="8"/>
