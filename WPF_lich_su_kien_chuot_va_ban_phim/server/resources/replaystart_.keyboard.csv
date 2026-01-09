@@ -13,3 +13,4 @@ Event(uint),MsgID(hex),Time(uint),VkCode(hex),ScanCode(hex),Flags(hex)
 10,101,8541656,44,20,80
 11,100,8542406,d,1c,0
 12,101,8542500,d,1c,80
+
