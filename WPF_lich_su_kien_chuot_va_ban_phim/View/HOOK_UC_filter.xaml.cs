@@ -224,13 +224,13 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
         private async void Button_Click_2(object sender, RoutedEventArgs e)
         {
             controlServer.SendCommand($"Sap_xep");
-            MessageBox.Show("Đã gửi lệnh sắp xếp đợi tối thiểu 2 để sever xử lý");
+            //MessageBox.Show("Đã gửi lệnh sắp xếp đợi tối thiểu 2 để sever xử lý");
             await Task.Delay(2000); // Chờ 2 giây để server xử lý
             controlServer.SendCommand($"Tach_va_dich");
-            MessageBox.Show("Đã gửi lệnh xử lý kê tiếp tối thiểu 2 giây để sever xử lý");
+            //MessageBox.Show("Đã gửi lệnh xử lý kê tiếp tối thiểu 2 giây để sever xử lý");
             await Task.Delay(2000); // Chờ 2 giây để server xử lý
             controlServer.SendCommand($"Phan_tich");
-            MessageBox.Show("Đã gửi lệnh thống kê đợi tối thiểu 5 giây để sever xử lý");
+            //MessageBox.Show("Đã gửi lệnh thống kê đợi tối thiểu 5 giây để sever xử lý");
             await Task.Delay(5000); // Chờ 2 giây để server xử lý
         }
 
