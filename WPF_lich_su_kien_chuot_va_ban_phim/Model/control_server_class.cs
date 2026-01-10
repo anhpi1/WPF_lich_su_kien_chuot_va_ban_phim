@@ -21,7 +21,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.Model
             try
             {
                 string exeDir = AppDomain.CurrentDomain.BaseDirectory;
-                string serverPath = Path.Combine(exeDir, "server", "main2.exe");
+                string serverPath = Path.Combine(exeDir, "server", "main3.exe");
 
                 if (!File.Exists(serverPath))
                 {

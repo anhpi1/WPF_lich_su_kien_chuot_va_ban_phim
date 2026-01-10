@@ -100,7 +100,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
 
         public void AddActionItem(string icon, string title, string info)
         {
-            ActionList.Add(new ActionItem
+            ActionList.Insert(0, new ActionItem
             {
                 Icon = icon,
                 Title = title,
