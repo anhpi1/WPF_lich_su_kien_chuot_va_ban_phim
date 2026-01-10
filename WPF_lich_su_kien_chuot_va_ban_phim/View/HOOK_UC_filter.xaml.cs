@@ -113,17 +113,17 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
             if (!Directory.Exists(folderPath))
             {
                 MessageBox.Show("Hãy ấn xử lý dữ liệu trước");
-                return; 
+                return;
             }
-                
+
+            // 🔥 XÓA TOÀN BỘ ITEM CŨ TRONG LISTBOX
+            ActionList.Clear();
 
             string[] files = Directory.GetFiles(folderPath, "*.csv");
 
             int i = 0;
             while (i < files.Length)
             {
-                // Replace all usages of 'Path' with 'System.IO.Path' to resolve ambiguity
-
                 string fileName = System.IO.Path.GetFileNameWithoutExtension(files[i]);
                 // VD: 00001_Di_chuyen_chuot_mouse
 
@@ -134,8 +134,8 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
                     continue;
                 }
 
-                string index = parts[0];          // 00001
-                string eventName = parts[1];      // Di_chuyen_chuot_mouse
+                string index = parts[0];     // 00001
+                string eventName = parts[1]; // Di_chuyen_chuot_mouse
 
                 string icon = GetIconFromEventName(eventName);
 
@@ -148,6 +148,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
                 i++;
             }
         }
+
 
         public void ShowReportMessageBox(string filePath)
         {
@@ -223,16 +224,46 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
 
         private async void Button_Click_2(object sender, RoutedEventArgs e)
         {
-            controlServer.SendCommand($"Sap_xep");
-            //MessageBox.Show("Đã gửi lệnh sắp xếp đợi tối thiểu 2 để sever xử lý");
-            await Task.Delay(2000); // Chờ 2 giây để server xử lý
-            controlServer.SendCommand($"Tach_va_dich");
-            //MessageBox.Show("Đã gửi lệnh xử lý kê tiếp tối thiểu 2 giây để sever xử lý");
-            await Task.Delay(2000); // Chờ 2 giây để server xử lý
-            controlServer.SendCommand($"Phan_tich");
-            //MessageBox.Show("Đã gửi lệnh thống kê đợi tối thiểu 5 giây để sever xử lý");
-            await Task.Delay(5000); // Chờ 2 giây để server xử lý
+            string logFolderPath = System.IO.Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                "server\\log");
+
+            if (!Directory.Exists(logFolderPath))
+            {
+                MessageBox.Show("Thư mục log không tồn tại!");
+                return;
+            }
+
+            bool hasMouseLog =
+                Directory.GetFiles(logFolderPath, "mouse_log*.csv").Length > 0;
+
+            bool hasKeyboardLog =
+                Directory.GetFiles(logFolderPath, "keyboard_log*.csv").Length > 0;
+
+            if (!hasMouseLog || !hasKeyboardLog)
+            {
+                string msg = "Thiếu file:\n";
+                if (!hasMouseLog) msg += "- mouse_log*.csv\n";
+                if (!hasKeyboardLog) msg += "- keyboard_log*.csv\n";
+
+                MessageBox.Show(msg, "Không thể xử lý");
+                return;
+            }
+
+            MessageBox.Show("Chờ một lúc!");
+            controlServer.SendCommand("Sap_xep");
+            await Task.Delay(2000);
+
+            controlServer.SendCommand("Tach_va_dich");
+            await Task.Delay(2000);
+
+            controlServer.SendCommand("Phan_tich");
+            await Task.Delay(5000);
+            
+            LoadProcessedEvents("server/processed_events");
         }
+
+
 
         private void Button_Click_3(object sender, RoutedEventArgs e)
         {
@@ -242,6 +273,7 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim.View
             
             controlServer.DeleteFiles("server/processed_events", 2);
             controlServer.DeleteFiles("server/Bao_cao_thong_ke.txt", 1);
+            LoadProcessedEvents("server/processed_events");
         }
     }
 

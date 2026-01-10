@@ -101,8 +101,10 @@ namespace WPF_lich_su_kien_chuot_va_ban_phim
             Screen.Source = new BitmapImage(new Uri("img/Home.png", UriKind.Relative));
             Screen_text_header.Text = "Home";
             Screen_text_title.Text = "Welcome to my app!";
-            is_home_on = true;
+            is_home_on = true;  
+            HOOK_UC_Main = new HOOK__UC_main(controlServer);
             myctrl.Content = HOOK_UC_Main;
+          
 
             Setting_on.Visibility = Visibility.Hidden;
             Setting_off.Visibility = Visibility.Visible;
